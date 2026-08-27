@@ -17,6 +17,13 @@ exports.default = {
                 strapi.log.info(`Created role: ${roleName}`);
             }
         }
+        // Grant Public Permissions
+        try {
+            await grantPublicPermissions(strapi);
+        }
+        catch (err) {
+            strapi.log.error('Error granting public permissions:', err);
+        }
         // Run Demo Data Seed
         try {
             await seedDemoData(strapi);
@@ -26,6 +33,33 @@ exports.default = {
         }
     },
 };
+async function grantPublicPermissions(strapi) {
+    const publicRole = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { name: 'Public' } });
+    if (!publicRole) {
+        strapi.log.warn('Public role not found! Permissions not granted.');
+        return;
+    }
+    const permissionsToGrant = [
+        'api::course.course.find',
+        'api::course.course.findOne',
+        'api::lesson.lesson.find',
+        'api::lesson.lesson.findOne',
+        'plugin::users-permissions.user.find',
+        'api::blog-post.blog-post.find',
+        'api::blog-post.blog-post.findOne',
+    ];
+    for (const action of permissionsToGrant) {
+        const existing = await strapi.db.query('plugin::users-permissions.permission').findOne({
+            where: { action, role: publicRole.id }
+        });
+        if (!existing) {
+            await strapi.db.query('plugin::users-permissions.permission').create({
+                data: { action, role: publicRole.id }
+            });
+            strapi.log.info(`Granted public permission: ${action}`);
+        }
+    }
+}
 async function seedDemoData(strapi) {
     // Check if we already seeded by looking for demo users
     const existingDemoUser = await strapi.db.query('plugin::users-permissions.user').findOne({
@@ -43,12 +77,11 @@ async function seedDemoData(strapi) {
     const authService = strapi.plugin('users-permissions').service('auth');
     const createUser = async (username, email, roleName) => {
         const roleId = getRole(roleName);
-        const password = await authService.hashPassword('Password123!');
         return strapi.entityService.create('plugin::users-permissions.user', {
             data: {
                 username,
                 email,
-                password,
+                password: 'Password123!',
                 role: roleId,
                 confirmed: true,
                 provider: 'local',
@@ -75,6 +108,51 @@ async function seedDemoData(strapi) {
             title: 'UI/UX Design Essentials for Engineers',
             description: 'Bridge the gap between engineering and design. Learn the fundamentals of color theory, typography, spacing, and modern principles like glassmorphism and subtle micro-animations. Build interfaces that wow your users without relying heavily on bloated frameworks.',
             difficulty: 'Beginner',
+            instructor: instructor.id,
+            publishedAt: new Date()
+        }
+    });
+    const course3 = await strapi.entityService.create('api::course.course', {
+        data: {
+            title: 'Advanced React Patterns in 2026',
+            description: 'Go beyond the basics of React. Dive into Server Components, fine-grained reactivity, suspense boundaries, and custom hooks for complex state management. This course is designed for mid-level developers aiming to become seniors.',
+            difficulty: 'Advanced',
+            instructor: instructor.id,
+            publishedAt: new Date()
+        }
+    });
+    const course4 = await strapi.entityService.create('api::course.course', {
+        data: {
+            title: 'PostgreSQL Mastery for Web Developers',
+            description: 'Stop treating your database like a dumb data store. Learn advanced indexing, window functions, complex joins, and how to write efficient raw SQL to dramatically speed up your application performance.',
+            difficulty: 'Intermediate',
+            instructor: instructor.id,
+            publishedAt: new Date()
+        }
+    });
+    const course5 = await strapi.entityService.create('api::course.course', {
+        data: {
+            title: 'The Art of Refactoring Legacy Code',
+            description: 'Learn how to safely modify large, untested codebases. We will cover testing strategies, identifying code smells, the strangler fig pattern, and how to incrementally upgrade systems without halting product development.',
+            difficulty: 'Advanced',
+            instructor: instructor.id,
+            publishedAt: new Date()
+        }
+    });
+    const course6 = await strapi.entityService.create('api::course.course', {
+        data: {
+            title: 'Figma for Developers: Building Design Systems',
+            description: 'Learn how to translate Figma designs into robust, reusable code components. We will explore design tokens, atomic design principles, and how to sync design updates directly into your CI/CD pipeline.',
+            difficulty: 'Beginner',
+            instructor: instructor.id,
+            publishedAt: new Date()
+        }
+    });
+    const course7 = await strapi.entityService.create('api::course.course', {
+        data: {
+            title: 'Machine Learning Fundamentals in JavaScript',
+            description: 'You don\'t need Python to get started with AI. Learn how to train models, run inference in the browser, and implement neural networks completely in JavaScript using TensorFlow.js.',
+            difficulty: 'Intermediate',
             instructor: instructor.id,
             publishedAt: new Date()
         }
@@ -176,6 +254,42 @@ async function seedDemoData(strapi) {
             body: 'Color is more than just aesthetics; it is a psychological tool. When designing an LMS, the choice of color can directly impact a student\'s cognitive load, retention, and motivation.\n\nFor example, blue often evokes trust and calmness, making it ideal for the core UI, while green signals success and progression, perfect for completion badges and "Mark Complete" buttons.\n\nAvoid overusing bright reds, which can trigger anxiety associated with failure or errors.',
             status: 'Published',
             author: adminUser.id,
+            publishedAt: new Date()
+        }
+    });
+    await strapi.entityService.create('api::blog-post.blog-post', {
+        data: {
+            title: 'State Management Showdown: Redux vs. Zustand vs. Context',
+            body: 'State management in React is a constantly evolving ecosystem. While Redux dominated for years, developers are increasingly moving towards simpler, more atomic solutions.\n\nIn this technical deep dive, we compare Redux Toolkit, Zustand, and React Context across metrics like bundle size, rendering performance, and developer experience. Learn when to reach for a heavy-duty library and when built-in tools are sufficient.',
+            status: 'Published',
+            author: contentManager.id,
+            publishedAt: new Date()
+        }
+    });
+    await strapi.entityService.create('api::blog-post.blog-post', {
+        data: {
+            title: 'The Future of AI in Software Engineering',
+            body: 'The integration of AI into the developer workflow is no longer a gimmick—it is a necessity for maintaining competitive velocity.\n\nHowever, this shift requires a new set of skills. Instead of purely focusing on syntax, modern developers must master prompt engineering, system design, and rigorous code review of AI-generated implementations.',
+            status: 'Published',
+            author: adminUser.id,
+            publishedAt: new Date()
+        }
+    });
+    await strapi.entityService.create('api::blog-post.blog-post', {
+        data: {
+            title: 'A Guide to Accessible Web Typography',
+            body: 'Accessibility shouldn\'t be an afterthought. When designing typography for the web, it is critical to ensure your content is legible for everyone, including users with visual impairments.\n\nKey practices include maintaining a minimum contrast ratio of 4.5:1 for normal text, avoiding ultra-thin font weights, and respecting user preferences for larger text sizes via relative units (rem/em).',
+            status: 'Published',
+            author: adminUser.id,
+            publishedAt: new Date()
+        }
+    });
+    await strapi.entityService.create('api::blog-post.blog-post', {
+        data: {
+            title: 'Why We Dropped Tailwind CSS for Native Modules',
+            body: 'Tailwind CSS is incredibly popular, but it isn\'t the right choice for every team. After a year of using Tailwind in production, we decided to migrate back to native CSS Modules.\n\nOur primary reasons included cleaner markup, better separation of concerns, and leveraging modern CSS features like native nesting and container queries that make utility classes feel redundant.',
+            status: 'Published',
+            author: contentManager.id,
             publishedAt: new Date()
         }
     });

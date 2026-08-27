@@ -1,6 +1,6 @@
 import { fetchAPI } from '@/lib/api';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar'; // We'll assume a Navbar exists or just put a simple header
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const revalidate = 60; // ISR for blogs
 
@@ -19,9 +19,10 @@ export default async function PublicBlogPage() {
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="text-2xl font-black text-blue-600 tracking-tight">LMS<span className="text-gray-800">.</span></Link>
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
+            <ThemeToggle />
             <Link href="/login" className="text-gray-600 font-medium hover:text-blue-600">Login</Link>
-            <Link href="/register" className="px-4 py-2 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700">Register</Link>
+            <Link href="/register" className="px-4 py-2 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 ml-2">Register</Link>
           </div>
         </div>
       </header>
