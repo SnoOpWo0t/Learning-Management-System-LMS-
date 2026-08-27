@@ -38,6 +38,19 @@ A production-ready full-stack Learning Management System tailored for modern edu
 
 ---
 
+## 🔑 Demo Accounts
+
+The backend is pre-configured to automatically seed the database on the first run. You can use the following demo accounts to test all platform features natively.
+
+| Role | Email | Password | Dashboard Access |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@demo.com` | `Password123!` | Complete overview, Blog Management, User Management |
+| **Content Manager** | `content@demo.com` | `Password123!` | Blog Creation & Publishing |
+| **Instructor** | `instructor@demo.com` | `Password123!` | Course Creation, Lesson Management, Quiz Building |
+| **Student** | `student@demo.com` | `Password123!` | Course Browsing, Enrollment, Lesson Progress, Quiz Taking |
+
+---
+
 ## 💻 Local Development Setup
 
 ### 1. Backend (Strapi)
