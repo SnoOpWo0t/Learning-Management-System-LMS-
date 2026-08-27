@@ -1,0 +1,69 @@
+import { fetchAPI } from '@/lib/api';
+import Link from 'next/link';
+import Navbar from '@/components/Navbar'; // We'll assume a Navbar exists or just put a simple header
+
+export const revalidate = 60; // ISR for blogs
+
+export default async function PublicBlogPage() {
+  let blogs = [];
+  try {
+    // Fetch only published blogs
+    const res = await fetchAPI('/blog-posts?filters[status][$eq]=Published&populate=author');
+    blogs = res.data || [];
+  } catch (err) {
+    console.error('Failed to fetch blogs');
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/" className="text-2xl font-black text-blue-600 tracking-tight">LMS<span className="text-gray-800">.</span></Link>
+          <div className="flex gap-4">
+            <Link href="/login" className="text-gray-600 font-medium hover:text-blue-600">Login</Link>
+            <Link href="/register" className="px-4 py-2 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700">Register</Link>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 py-12">
+        <h1 className="text-4xl font-bold mb-8 text-center">Our Blog</h1>
+        
+        {blogs.length === 0 ? (
+          <p className="text-center text-gray-500">No articles published yet. Check back soon!</p>
+        ) : (
+          <div className="space-y-8">
+            {blogs.map((blog: any) => (
+              <article key={blog.documentId} className="bg-white p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-2xl font-bold">
+                    <Link href={`/blog/${blog.documentId}`} className="hover:text-blue-600">
+                      {blog.title}
+                    </Link>
+                  </h2>
+                  <span className="text-sm text-gray-400">
+                    {new Date(blog.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="prose text-gray-600 line-clamp-3 mb-4">
+                  {blog.body}
+                </div>
+                <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-100">
+                  <div className="flex items-center text-sm font-medium text-gray-600">
+                    <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                       {blog.author?.username?.[0]?.toUpperCase() || 'A'}
+                    </span>
+                    {blog.author?.username || 'Admin'}
+                  </div>
+                  <Link href={`/blog/${blog.documentId}`} className="text-blue-600 font-semibold hover:underline">
+                    Read More &rarr;
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

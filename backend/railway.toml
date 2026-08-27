@@ -1,0 +1,13 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/_health"
+healthcheckTimeout = 100
+
+[env]
+NODE_ENV = "production"
+DATABASE_CLIENT = "postgres"
+DATABASE_SSL = "true"
