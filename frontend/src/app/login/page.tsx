@@ -24,7 +24,7 @@ export default function LoginPage() {
         method: 'POST',
         body: JSON.stringify({ identifier, password }),
       });
-      login(data.jwt, data.user);
+      await login(data.jwt, data.user);
       router.push('/dashboard');
     } catch (err) {
       setError('Invalid credentials or server error.');

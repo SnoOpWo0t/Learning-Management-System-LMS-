@@ -11,12 +11,17 @@ export interface User {
   username: string;
   email: string;
   roleType?: Role;
+  bio?: string;
+  avatar?: {
+    id: number;
+    url: string;
+  } | null;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (jwt: string, user: User) => void;
+  login: (jwt: string, user: User) => Promise<void>;
   logout: () => void;
   token: string | null;
 }
@@ -24,7 +29,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  login: () => {},
+  login: async () => {},
   logout: () => {},
   token: null,
 });
@@ -39,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const storedToken = Cookies.get('jwt');
       if (storedToken) {
         try {
-          const res = await fetch(`${API_URL}/api/users/me?populate=role`, {
+          const res = await fetch(`${API_URL}/api/custom-auth/me`, {
             headers: {
               Authorization: `Bearer ${storedToken}`,
             },
@@ -59,6 +64,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               username: userData.username,
               email: userData.email,
               roleType,
+              bio: userData.bio,
+              avatar: userData.avatar,
             });
             setToken(storedToken);
           } else {
@@ -76,21 +83,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkUserLoggedIn();
   }, []);
 
-  const login = (jwt: string, userData: any) => {
+  const login = async (jwt: string, userData: any) => {
     Cookies.set('jwt', jwt, { expires: 7 }); // 7 days
     setToken(jwt);
     
-    let roleType = 'Student' as Role;
-    if (userData.role && userData.role.name) {
-       roleType = userData.role.name as Role;
+    try {
+      const res = await fetch(`${API_URL}/api/custom-auth/me`, {
+        headers: { Authorization: `Bearer ${jwt}` },
+      });
+      if (res.ok) {
+        const fullUserData = await res.json();
+        let roleType = 'Student' as Role;
+        if (fullUserData.role && fullUserData.role.name) {
+           roleType = fullUserData.role.name as Role;
+        }
+        setUser({
+          id: fullUserData.id,
+          username: fullUserData.username,
+          email: fullUserData.email,
+          roleType,
+          bio: fullUserData.bio,
+          avatar: fullUserData.avatar,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user details on login', error);
+      // Fallback
+      setUser({
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        roleType: 'Student',
+      });
     }
-
-    setUser({
-      id: userData.id,
-      username: userData.username,
-      email: userData.email,
-      roleType,
-    });
   };
 
   const logout = () => {

@@ -9,10 +9,11 @@ export default function BrowseCoursesPage() {
   const { token, user } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState<string | null>(null);
 
   const fetchCourses = async () => {
     try {
-      const res = await fetchAPI(`/courses?populate=*`, {
+      const res = await fetchAPI(`/courses?populate=instructor`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCourses(res.data || []);
@@ -30,6 +31,7 @@ export default function BrowseCoursesPage() {
   }, [token]);
 
   const handleEnroll = async (courseId: string) => {
+    setEnrolling(courseId);
     try {
       await fetchAPI('/enrollments', {
         method: 'POST',
@@ -44,31 +46,57 @@ export default function BrowseCoursesPage() {
       alert('Successfully enrolled!');
     } catch (err) {
       alert('Enrollment failed. You might already be enrolled.');
+    } finally {
+      setEnrolling(null);
     }
   };
 
   return (
     <ProtectedRoute allowedRoles={['Student', 'Admin']}>
-      <div className="space-y-6">
-        <h2 className="text-3xl font-bold">Browse Courses</h2>
+      <div className="space-y-8 pb-8">
+        <div>
+          <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Browse Courses</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">Discover new topics and expand your skillset.</p>
+        </div>
         
         {loading ? (
-          <div className="loader">Loading...</div>
+          <div className="flex justify-center py-20">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
         ) : courses.length === 0 ? (
-          <p className="text-gray-500">No courses available at the moment.</p>
+          <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md p-12 rounded-3xl border border-gray-200/50 dark:border-slate-800/50 text-center">
+            <p className="text-xl text-gray-500 dark:text-gray-400">No courses available at the moment.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             {courses.map(course => (
-              <div key={course.documentId} className="bg-white p-5 rounded-xl shadow-sm border flex flex-col justify-between">
-                <div>
-                  <h4 className="text-lg font-bold">{course.title}</h4>
-                  <span className="inline-block px-2 py-1 mt-2 text-xs font-semibold text-green-800 bg-green-100 rounded-full">{course.difficulty}</span>
-                  <p className="mt-3 text-sm text-gray-600 line-clamp-3">{course.description}</p>
+              <div key={course.documentId} className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200/50 dark:border-slate-800/50 overflow-hidden flex flex-col group hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+                <div className="aspect-video w-full bg-gray-200 dark:bg-slate-800 relative overflow-hidden">
+                  <img src={`https://picsum.photos/seed/${course.documentId}/400/300`} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute top-3 right-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-gray-800 dark:text-white shadow-sm">
+                    {course.difficulty}
+                  </div>
                 </div>
-                <div className="mt-6 flex justify-between items-center">
-                   <button onClick={() => handleEnroll(course.documentId)} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium w-full">
-                     Enroll Now
-                   </button>
+                
+                <div className="p-6 flex flex-col flex-1">
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">{course.title}</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 mb-6 flex-1">{course.description}</p>
+                  
+                  <div className="pt-4 mt-auto border-t border-gray-100 dark:border-slate-800/50 flex flex-col gap-4">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 font-medium">
+                       <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xs shadow-inner">
+                         {course.instructor?.username?.[0]?.toUpperCase() || 'I'}
+                       </div>
+                       {course.instructor?.username || 'Instructor'}
+                    </div>
+                    <button 
+                      onClick={() => handleEnroll(course.documentId)} 
+                      disabled={enrolling === course.documentId}
+                      className="w-full py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
+                    >
+                      {enrolling === course.documentId ? 'Enrolling...' : 'Enroll Now'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

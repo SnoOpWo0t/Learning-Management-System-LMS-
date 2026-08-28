@@ -1,14 +1,34 @@
 import type { Core } from '@strapi/strapi';
 
 export default {
-  register() {},
+  register({ strapi }: { strapi: Core.Strapi }) {
+    // Add custom fields to users-permissions user
+    if (strapi.plugin('users-permissions')) {
+      const userSchema = strapi.plugin('users-permissions').contentTypes.user;
+      
+      if (userSchema && userSchema.schema && userSchema.schema.attributes) {
+        // @ts-ignore
+        userSchema.schema.attributes.avatar = {
+          type: 'media',
+          multiple: false,
+          required: false,
+          allowedTypes: ['images'],
+        };
+        
+        // @ts-ignore
+        userSchema.schema.attributes.bio = {
+          type: 'text',
+        };
+      }
+    }
+  },
 
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
     // Bootstrap Roles
     const rolesToCreate = ['Admin', 'Content Manager', 'Instructor', 'Student'];
     const roleService = strapi.plugin('users-permissions').service('role');
     const existingRoles = await strapi.db.query('plugin::users-permissions.role').findMany({});
-    const existingRoleNames = existingRoles.map(r => r.name);
+    const existingRoleNames = existingRoles.map((r: any) => r.name);
 
     for (const roleName of rolesToCreate) {
       if (!existingRoleNames.includes(roleName)) {
@@ -20,11 +40,40 @@ export default {
       }
     }
 
+    // Override users-permissions "me" controller to populate role
+    const usersPermissions = strapi.plugin('users-permissions');
+    if (usersPermissions && usersPermissions.controllers && usersPermissions.controllers.user) {
+      const originalMe = usersPermissions.controllers.user.me;
+      usersPermissions.controllers.user.me = async (ctx: any) => {
+        const authUser = ctx.state.user;
+        if (!authUser) {
+          return ctx.unauthorized();
+        }
+        
+        // Fetch user with role and avatar populated
+        const user = await strapi.entityService.findOne(
+          'plugin::users-permissions.user',
+          authUser.id,
+          // @ts-ignore
+          { populate: ['role', 'avatar'] }
+        );
+        
+        ctx.body = user;
+      };
+    }
+
     // Grant Public Permissions
     try {
       await grantPublicPermissions(strapi);
     } catch (err) {
       strapi.log.error('Error granting public permissions:', err);
+    }
+
+    // Grant Role Permissions for custom roles (Admin, Content Manager, Instructor, Student)
+    try {
+      await grantRolePermissions(strapi);
+    } catch (err) {
+      strapi.log.error('Error granting role permissions:', err);
     }
 
     // Run Demo Data Seed
@@ -66,13 +115,115 @@ async function grantPublicPermissions(strapi: Core.Strapi) {
   }
 }
 
+async function grantRolePermissions(strapi: Core.Strapi) {
+  const roles = await strapi.db.query('plugin::users-permissions.role').findMany();
+  const getRoleId = (name: string) => roles.find((r: any) => r.name === name)?.id;
+
+  const adminRoleId = getRoleId('Admin');
+  const cmRoleId = getRoleId('Content Manager');
+  const instructorRoleId = getRoleId('Instructor');
+  const studentRoleId = getRoleId('Student');
+
+  if (!adminRoleId || !cmRoleId || !instructorRoleId || !studentRoleId) {
+    strapi.log.warn('Custom roles not found! Role permissions not granted.');
+    return;
+  }
+
+  // Base permission for all logged-in users to fetch their own profile and upload media
+  const basePermissions = [
+    'plugin::users-permissions.user.me',
+    'plugin::users-permissions.user.update',
+    'plugin::users-permissions.user.find', // Required to link user relation on content creation
+    'plugin::upload.content-api.upload',
+  ];
+
+  const adminPermissions = [
+    ...basePermissions,
+    // Manage users
+    'plugin::users-permissions.user.destroy',
+    'plugin::users-permissions.role.find',
+    // Courses
+    'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy',
+    // Lessons
+    'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy',
+    // Quizzes
+    'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy',
+    'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
+    // Blogs
+    'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy',
+    // Progress / Enrollments
+    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+  ];
+
+  const cmPermissions = [
+    ...basePermissions,
+    // Courses
+    'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy',
+    // Lessons
+    'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy',
+    // Quizzes
+    'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy',
+    'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
+    // Blogs
+    'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy',
+    // Progress / Enrollments
+    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+  ];
+
+  const instructorPermissions = [
+    ...basePermissions,
+    // Courses (Own only - filtered in frontend/policies, but they need basic CRUD here)
+    'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy',
+    // Lessons
+    'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy',
+    // Quizzes
+    'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy',
+    'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
+    // Progress / Enrollments
+    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+  ];
+
+  const studentPermissions = [
+    ...basePermissions,
+    // View courses/lessons/blogs (public already has some, but good to ensure)
+    'api::course.course.find', 'api::course.course.findOne',
+    'api::lesson.lesson.find', 'api::lesson.lesson.findOne',
+    // Enroll
+    'api::enrollment.enrollment.create', 'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne',
+    // Take quizzes
+    'api::quiz-result.quiz-result.create', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
+    // Progress
+    'api::lesson-progress.lesson-progress.create', 'api::lesson-progress.lesson-progress.update', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+  ];
+
+  const grant = async (roleId: number, permissions: string[]) => {
+    for (const action of permissions) {
+      const existing = await strapi.db.query('plugin::users-permissions.permission').findOne({
+        where: { action, role: roleId }
+      });
+      if (!existing) {
+        await strapi.db.query('plugin::users-permissions.permission').create({
+          data: { action, role: roleId } as any
+        });
+      }
+    }
+  };
+
+  await grant(adminRoleId, adminPermissions);
+  await grant(cmRoleId, cmPermissions);
+  await grant(instructorRoleId, instructorPermissions);
+  await grant(studentRoleId, studentPermissions);
+  
+  strapi.log.info('Granted custom role permissions successfully.');
+}
+
 async function seedDemoData(strapi: Core.Strapi) {
-  // Check if we already seeded by looking for demo users
   const existingDemoUser = await strapi.db.query('plugin::users-permissions.user').findOne({
     where: { email: 'instructor@demo.com' }
   });
+  const existingBlog = await strapi.db.query('api::blog-post.blog-post').findOne();
 
-  if (existingDemoUser) {
+  if (existingDemoUser && existingBlog) {
     strapi.log.info('Demo data already seeded. Skipping.');
     return;
   }
@@ -88,6 +239,13 @@ async function seedDemoData(strapi: Core.Strapi) {
 
   const createUser = async (username: string, email: string, roleName: string) => {
     const roleId = getRole(roleName);
+    
+    // Check if user exists
+    const existing = await strapi.db.query('plugin::users-permissions.user').findOne({
+      where: { email }
+    });
+    
+    if (existing) return existing;
     
     return strapi.entityService.create('plugin::users-permissions.user', {
       data: {
@@ -106,8 +264,11 @@ async function seedDemoData(strapi: Core.Strapi) {
   const instructor = await createUser('InstructorDemo', 'instructor@demo.com', 'Instructor');
   const student = await createUser('StudentDemo', 'student@demo.com', 'Student');
   const student2 = await createUser('StudentDemo2', 'student2@demo.com', 'Student');
-
-  // 2. Create Courses
+  
+  if (existingDemoUser && !existingBlog) {
+    strapi.log.info('Seeding just blog posts...');
+  } else {
+    // 2. Create Courses
   const course1 = await strapi.entityService.create('api::course.course', {
     data: {
       title: 'Modern Web Architecture: From Zero to Hero',
@@ -266,6 +427,7 @@ async function seedDemoData(strapi: Core.Strapi) {
       publishedAt: new Date()
     } as any
   });
+  } // End of conditional course seeding
 
   // 7. Create Blog Posts
   await strapi.entityService.create('api::blog-post.blog-post', {

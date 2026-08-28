@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { fetchAPI } from '@/lib/api';
-
-import { ThemeToggle } from '@/components/ThemeToggle';
+import PublicNavbar from '@/components/PublicNavbar';
 
 export const revalidate = 60; // ISR for homepage
 
@@ -17,17 +16,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-black text-blue-600 tracking-tight">LMS<span className="text-gray-800">.</span></Link>
-          <div className="flex gap-4 items-center">
-            <ThemeToggle />
-            <Link href="/blog" className="text-gray-600 font-medium hover:text-blue-600 mr-2">Blog</Link>
-            <Link href="/login" className="text-gray-600 font-medium hover:text-blue-600">Login</Link>
-            <Link href="/register" className="px-4 py-2 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 transition-colors ml-2">Get Started</Link>
-          </div>
-        </div>
-      </header>
+      <PublicNavbar />
 
       <main className="flex-1 flex flex-col">
         {/* Hero Section */}

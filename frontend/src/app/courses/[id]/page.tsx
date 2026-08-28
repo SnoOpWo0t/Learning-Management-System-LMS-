@@ -1,8 +1,7 @@
 import { fetchAPI } from '@/lib/api';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-
-import { ThemeToggle } from '@/components/ThemeToggle';
+import PublicNavbar from '@/components/PublicNavbar';
 
 export const revalidate = 60; // ISR for course pages
 
@@ -26,16 +25,7 @@ export default async function PublicCoursePage({ params }: { params: Promise<{ i
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-white shadow-sm sticky top-0 z-50 border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-black text-blue-600 tracking-tight">LMS<span className="text-gray-800">.</span></Link>
-          <div className="flex gap-4 items-center">
-            <ThemeToggle />
-            <Link href="/login" className="text-gray-600 font-medium hover:text-blue-600">Login</Link>
-            <Link href="/register" className="px-4 py-2 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 transition-colors ml-2">Sign Up</Link>
-          </div>
-        </div>
-      </header>
+      <PublicNavbar />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-12 flex flex-col lg:flex-row gap-8">
         

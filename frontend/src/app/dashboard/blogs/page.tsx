@@ -4,37 +4,29 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { fetchAPI } from '@/lib/api';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Link from 'next/link';
 
-export default function ManageCoursesPage() {
+export default function ManageBlogsPage() {
   const { token, user } = useAuth();
-  const [courses, setCourses] = useState<any[]>([]);
+  const [blogs, setBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<any | null>(null);
-  const [deletingCourse, setDeletingCourse] = useState<any | null>(null);
+  const [editingBlog, setEditingBlog] = useState<any | null>(null);
+  const [deletingBlog, setDeletingBlog] = useState<any | null>(null);
   
   // Form State
   const [formData, setFormData] = useState({
     title: '',
-    description: '',
-    difficulty: 'Beginner',
+    content: '',
+    status: 'Draft',
   });
   const [saving, setSaving] = useState(false);
 
-  const fetchCourses = async () => {
+  const fetchBlogs = async () => {
     try {
-      // Admins and Content Managers see all courses. Instructors see only their own.
-      // Note: The backend policies should enforce this securely, but we can also filter here.
-      let query = '?populate=instructor';
-      if (user?.roleType === 'Instructor') {
-        query += `&filters[instructor][id][$eq]=${user.id}`;
-      }
-      
-      const res = await fetchAPI(`/courses${query}`, {
+      const res = await fetchAPI(`/blog-posts?populate=author`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setCourses(res.data || []);
+      setBlogs(res.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -43,24 +35,24 @@ export default function ManageCoursesPage() {
   };
 
   useEffect(() => {
-    if (token && user) {
-      fetchCourses();
+    if (token) {
+      fetchBlogs();
     }
-  }, [token, user]);
+  }, [token]);
 
   const openCreateModal = () => {
-    setFormData({ title: '', description: '', difficulty: 'Beginner' });
-    setEditingCourse(null);
+    setFormData({ title: '', content: '', status: 'Draft' });
+    setEditingBlog(null);
     setIsModalOpen(true);
   };
 
-  const openEditModal = (course: any) => {
+  const openEditModal = (blog: any) => {
     setFormData({ 
-      title: course.title, 
-      description: course.description, 
-      difficulty: course.difficulty || 'Beginner' 
+      title: blog.title, 
+      content: blog.content, 
+      status: blog.status || 'Draft' 
     });
-    setEditingCourse(course);
+    setEditingBlog(blog);
     setIsModalOpen(true);
   };
 
@@ -68,56 +60,57 @@ export default function ManageCoursesPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      if (editingCourse) {
-        await fetchAPI(`/courses/${editingCourse.documentId}`, {
+      if (editingBlog) {
+        await fetchAPI(`/blog-posts/${editingBlog.documentId}`, {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` },
           body: JSON.stringify({ data: formData })
         });
       } else {
-        await fetchAPI(`/courses`, {
+        // Optional: populate author if we had user context in this scope
+        await fetchAPI(`/blog-posts`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ data: { ...formData, instructor: user?.id } })
+          body: JSON.stringify({ data: { ...formData, author: user?.id } })
         });
       }
       setIsModalOpen(false);
-      fetchCourses();
+      fetchBlogs();
     } catch (err: any) {
-      alert(`Failed to save course: ${err.message || err}`);
+      alert(`Failed to save blog post: ${err.message || err}`);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!deletingCourse) return;
+    if (!deletingBlog) return;
     setSaving(true);
     try {
-      await fetchAPI(`/courses/${deletingCourse.documentId}`, {
+      await fetchAPI(`/blog-posts/${deletingBlog.documentId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      setDeletingCourse(null);
-      fetchCourses();
+      setDeletingBlog(null);
+      fetchBlogs();
     } catch (err) {
-      alert('Failed to delete course');
+      alert('Failed to delete blog post');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <ProtectedRoute allowedRoles={['Admin', 'Content Manager', 'Instructor']}>
+    <ProtectedRoute allowedRoles={['Admin', 'Content Manager']}>
       <div className="space-y-8 pb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Manage Courses</h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-2">Create, edit, and manage educational content.</p>
+            <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Manage Blogs</h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">Write, edit, and publish articles.</p>
           </div>
           <button onClick={openCreateModal} className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 shrink-0">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-            Create Course
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            Write Post
           </button>
         </div>
 
@@ -126,55 +119,48 @@ export default function ManageCoursesPage() {
             <div className="flex justify-center py-20">
               <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
-          ) : courses.length === 0 ? (
+          ) : blogs.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-3xl mb-4 mx-auto">📚</div>
-              <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">No courses found</p>
-              <p className="text-gray-500 dark:text-gray-400">You haven't created any courses yet.</p>
+              <div className="w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-3xl mb-4 mx-auto">✍️</div>
+              <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">No blog posts found</p>
+              <p className="text-gray-500 dark:text-gray-400">Get started by writing your first article.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200/50 dark:border-slate-800/50 bg-gray-50/50 dark:bg-slate-800/50">
-                    <th className="px-6 py-4 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Course Title</th>
-                    <th className="px-6 py-4 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Difficulty</th>
-                    <th className="px-6 py-4 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Instructor</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</th>
                     <th className="px-6 py-4 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-slate-800/50">
-                  {courses.map((course) => (
-                    <tr key={course.documentId} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                  {blogs.map((blog) => (
+                    <tr key={blog.documentId} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-slate-700 overflow-hidden shrink-0">
-                            <img src={`https://picsum.photos/seed/${course.documentId}/100/100`} alt="" className="w-full h-full object-cover" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900 dark:text-white line-clamp-1">{course.title}</p>
-                            <p className="text-xs text-gray-500 line-clamp-1">{course.description}</p>
-                          </div>
-                        </div>
+                        <p className="font-bold text-gray-900 dark:text-white line-clamp-1 max-w-md">{blog.title}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-block px-2.5 py-1 text-xs font-bold text-blue-800 dark:text-blue-200 bg-blue-100 dark:bg-blue-900/60 rounded-full border border-transparent">
-                          {course.difficulty}
+                        <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-full border ${
+                          blog.status === 'Published' ? 'bg-green-50 border-green-100 text-green-600 dark:bg-green-900/30 dark:border-green-800/50 dark:text-green-400' :
+                          'bg-yellow-50 border-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:border-yellow-800/50 dark:text-yellow-400'
+                        }`}>
+                          {blog.status || 'Draft'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                        {course.instructor?.username || 'Unknown'}
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                        {blog.author?.username || 'Unknown'}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => openEditModal(course)} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+                          <button onClick={() => openEditModal(blog)} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
                             Edit
                           </button>
-                          {(user?.roleType === 'Admin' || user?.roleType === 'Content Manager') && (
-                            <button onClick={() => setDeletingCourse(course)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
-                              Delete
-                            </button>
-                          )}
+                          <button onClick={() => setDeletingBlog(blog)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
+                            Delete
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -190,7 +176,7 @@ export default function ManageCoursesPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl w-full max-w-lg border border-gray-100 dark:border-slate-800 p-8 overflow-hidden relative">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                {editingCourse ? 'Edit Course' : 'Create Course'}
+                {editingBlog ? 'Edit Blog Post' : 'Write New Post'}
               </h3>
               
               <form onSubmit={handleSave} className="space-y-4">
@@ -203,22 +189,21 @@ export default function ManageCoursesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content</label>
                   <textarea 
-                    required rows={3}
+                    required rows={5}
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl dark:text-white"
-                    value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
+                    value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Difficulty</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                   <select 
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl dark:text-white"
-                    value={formData.difficulty} onChange={e => setFormData({...formData, difficulty: e.target.value})}
+                    value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
                   >
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Published">Published</option>
                   </select>
                 </div>
 
@@ -227,7 +212,7 @@ export default function ManageCoursesPage() {
                     Cancel
                   </button>
                   <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50" disabled={saving}>
-                    {saving ? 'Saving...' : 'Save Course'}
+                    {saving ? 'Saving...' : 'Save Post'}
                   </button>
                 </div>
               </form>
@@ -236,14 +221,14 @@ export default function ManageCoursesPage() {
         )}
 
         {/* Delete Modal */}
-        {deletingCourse && (
+        {deletingBlog && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl w-full max-w-sm border border-gray-100 dark:border-slate-800 p-8 text-center">
               <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">⚠️</div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Course?</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">Are you sure you want to delete <span className="font-bold">{deletingCourse.title}</span>? This action cannot be undone.</p>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Blog Post?</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">Are you sure you want to delete <span className="font-bold">{deletingBlog.title}</span>? This action cannot be undone.</p>
               <div className="flex gap-3 justify-center">
-                <button onClick={() => setDeletingCourse(null)} className="flex-1 px-5 py-2.5 bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white font-semibold rounded-xl" disabled={saving}>Cancel</button>
+                <button onClick={() => setDeletingBlog(null)} className="flex-1 px-5 py-2.5 bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white font-semibold rounded-xl" disabled={saving}>Cancel</button>
                 <button onClick={handleDelete} className="flex-1 px-5 py-2.5 bg-red-600 text-white font-semibold rounded-xl disabled:opacity-50" disabled={saving}>{saving ? 'Deleting...' : 'Delete'}</button>
               </div>
             </div>

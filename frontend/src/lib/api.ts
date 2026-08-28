@@ -19,8 +19,17 @@ export async function fetchAPI(path: string, options = {}) {
   const response = await fetch(`${API_URL}/api${path}`, mergedOptions);
   
   if (!response.ok) {
-    console.error(response.statusText);
-    throw new Error('An error occurred please try again');
+    let errorMsg = response.statusText;
+    try {
+      const errData = await response.clone().json();
+      console.error('API Error Response:', errData);
+      if (errData.error?.message) {
+        errorMsg = errData.error.message;
+      }
+    } catch (e) {
+      console.error(response.statusText);
+    }
+    throw new Error(errorMsg || 'An error occurred please try again');
   }
   
   return response.json();

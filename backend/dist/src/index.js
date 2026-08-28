@@ -1,13 +1,31 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = {
-    register() { },
+    register({ strapi }) {
+        // Add custom fields to users-permissions user
+        if (strapi.plugin('users-permissions')) {
+            const userSchema = strapi.plugin('users-permissions').contentTypes.user;
+            if (userSchema && userSchema.schema && userSchema.schema.attributes) {
+                // @ts-ignore
+                userSchema.schema.attributes.avatar = {
+                    type: 'media',
+                    multiple: false,
+                    required: false,
+                    allowedTypes: ['images'],
+                };
+                // @ts-ignore
+                userSchema.schema.attributes.bio = {
+                    type: 'text',
+                };
+            }
+        }
+    },
     async bootstrap({ strapi }) {
         // Bootstrap Roles
         const rolesToCreate = ['Admin', 'Content Manager', 'Instructor', 'Student'];
         const roleService = strapi.plugin('users-permissions').service('role');
         const existingRoles = await strapi.db.query('plugin::users-permissions.role').findMany({});
-        const existingRoleNames = existingRoles.map(r => r.name);
+        const existingRoleNames = existingRoles.map((r) => r.name);
         for (const roleName of rolesToCreate) {
             if (!existingRoleNames.includes(roleName)) {
                 await roleService.createRole({
@@ -17,12 +35,35 @@ exports.default = {
                 strapi.log.info(`Created role: ${roleName}`);
             }
         }
+        // Override users-permissions "me" controller to populate role
+        const usersPermissions = strapi.plugin('users-permissions');
+        if (usersPermissions && usersPermissions.controllers && usersPermissions.controllers.user) {
+            const originalMe = usersPermissions.controllers.user.me;
+            usersPermissions.controllers.user.me = async (ctx) => {
+                const authUser = ctx.state.user;
+                if (!authUser) {
+                    return ctx.unauthorized();
+                }
+                // Fetch user with role and avatar populated
+                const user = await strapi.entityService.findOne('plugin::users-permissions.user', authUser.id, 
+                // @ts-ignore
+                { populate: ['role', 'avatar'] });
+                ctx.body = user;
+            };
+        }
         // Grant Public Permissions
         try {
             await grantPublicPermissions(strapi);
         }
         catch (err) {
             strapi.log.error('Error granting public permissions:', err);
+        }
+        // Grant Role Permissions for custom roles (Admin, Content Manager, Instructor, Student)
+        try {
+            await grantRolePermissions(strapi);
+        }
+        catch (err) {
+            strapi.log.error('Error granting role permissions:', err);
         }
         // Run Demo Data Seed
         try {
@@ -60,12 +101,103 @@ async function grantPublicPermissions(strapi) {
         }
     }
 }
+async function grantRolePermissions(strapi) {
+    const roles = await strapi.db.query('plugin::users-permissions.role').findMany();
+    const getRoleId = (name) => { var _a; return (_a = roles.find((r) => r.name === name)) === null || _a === void 0 ? void 0 : _a.id; };
+    const adminRoleId = getRoleId('Admin');
+    const cmRoleId = getRoleId('Content Manager');
+    const instructorRoleId = getRoleId('Instructor');
+    const studentRoleId = getRoleId('Student');
+    if (!adminRoleId || !cmRoleId || !instructorRoleId || !studentRoleId) {
+        strapi.log.warn('Custom roles not found! Role permissions not granted.');
+        return;
+    }
+    // Base permission for all logged-in users to fetch their own profile and upload media
+    const basePermissions = [
+        'plugin::users-permissions.user.me',
+        'plugin::users-permissions.user.update',
+        'plugin::users-permissions.user.find', // Required to link user relation on content creation
+        'plugin::upload.content-api.upload',
+    ];
+    const adminPermissions = [
+        ...basePermissions,
+        // Manage users
+        'plugin::users-permissions.user.destroy',
+        'plugin::users-permissions.role.find',
+        // Courses
+        'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy',
+        // Lessons
+        'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy',
+        // Quizzes
+        'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy',
+        'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
+        // Blogs
+        'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy',
+        // Progress / Enrollments
+        'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+    ];
+    const cmPermissions = [
+        ...basePermissions,
+        // Courses
+        'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy',
+        // Lessons
+        'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy',
+        // Quizzes
+        'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy',
+        'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
+        // Blogs
+        'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy',
+        // Progress / Enrollments
+        'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+    ];
+    const instructorPermissions = [
+        ...basePermissions,
+        // Courses (Own only - filtered in frontend/policies, but they need basic CRUD here)
+        'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy',
+        // Lessons
+        'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy',
+        // Quizzes
+        'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy',
+        'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
+        // Progress / Enrollments
+        'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+    ];
+    const studentPermissions = [
+        ...basePermissions,
+        // View courses/lessons/blogs (public already has some, but good to ensure)
+        'api::course.course.find', 'api::course.course.findOne',
+        'api::lesson.lesson.find', 'api::lesson.lesson.findOne',
+        // Enroll
+        'api::enrollment.enrollment.create', 'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne',
+        // Take quizzes
+        'api::quiz-result.quiz-result.create', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
+        // Progress
+        'api::lesson-progress.lesson-progress.create', 'api::lesson-progress.lesson-progress.update', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+    ];
+    const grant = async (roleId, permissions) => {
+        for (const action of permissions) {
+            const existing = await strapi.db.query('plugin::users-permissions.permission').findOne({
+                where: { action, role: roleId }
+            });
+            if (!existing) {
+                await strapi.db.query('plugin::users-permissions.permission').create({
+                    data: { action, role: roleId }
+                });
+            }
+        }
+    };
+    await grant(adminRoleId, adminPermissions);
+    await grant(cmRoleId, cmPermissions);
+    await grant(instructorRoleId, instructorPermissions);
+    await grant(studentRoleId, studentPermissions);
+    strapi.log.info('Granted custom role permissions successfully.');
+}
 async function seedDemoData(strapi) {
-    // Check if we already seeded by looking for demo users
     const existingDemoUser = await strapi.db.query('plugin::users-permissions.user').findOne({
         where: { email: 'instructor@demo.com' }
     });
-    if (existingDemoUser) {
+    const existingBlog = await strapi.db.query('api::blog-post.blog-post').findOne();
+    if (existingDemoUser && existingBlog) {
         strapi.log.info('Demo data already seeded. Skipping.');
         return;
     }
@@ -77,6 +209,12 @@ async function seedDemoData(strapi) {
     const authService = strapi.plugin('users-permissions').service('auth');
     const createUser = async (username, email, roleName) => {
         const roleId = getRole(roleName);
+        // Check if user exists
+        const existing = await strapi.db.query('plugin::users-permissions.user').findOne({
+            where: { email }
+        });
+        if (existing)
+            return existing;
         return strapi.entityService.create('plugin::users-permissions.user', {
             data: {
                 username,
@@ -93,151 +231,156 @@ async function seedDemoData(strapi) {
     const instructor = await createUser('InstructorDemo', 'instructor@demo.com', 'Instructor');
     const student = await createUser('StudentDemo', 'student@demo.com', 'Student');
     const student2 = await createUser('StudentDemo2', 'student2@demo.com', 'Student');
-    // 2. Create Courses
-    const course1 = await strapi.entityService.create('api::course.course', {
-        data: {
-            title: 'Modern Web Architecture: From Zero to Hero',
-            description: 'Master the principles of scalable system design. In this comprehensive course, we dive deep into decoupled architectures, headless CMS integration, server-side rendering with Next.js, and how to orchestrate high-availability systems. Perfect for developers looking to transition into architectural roles.',
-            difficulty: 'Advanced',
-            instructor: instructor.id,
-            publishedAt: new Date()
-        }
-    });
-    const course2 = await strapi.entityService.create('api::course.course', {
-        data: {
-            title: 'UI/UX Design Essentials for Engineers',
-            description: 'Bridge the gap between engineering and design. Learn the fundamentals of color theory, typography, spacing, and modern principles like glassmorphism and subtle micro-animations. Build interfaces that wow your users without relying heavily on bloated frameworks.',
-            difficulty: 'Beginner',
-            instructor: instructor.id,
-            publishedAt: new Date()
-        }
-    });
-    const course3 = await strapi.entityService.create('api::course.course', {
-        data: {
-            title: 'Advanced React Patterns in 2026',
-            description: 'Go beyond the basics of React. Dive into Server Components, fine-grained reactivity, suspense boundaries, and custom hooks for complex state management. This course is designed for mid-level developers aiming to become seniors.',
-            difficulty: 'Advanced',
-            instructor: instructor.id,
-            publishedAt: new Date()
-        }
-    });
-    const course4 = await strapi.entityService.create('api::course.course', {
-        data: {
-            title: 'PostgreSQL Mastery for Web Developers',
-            description: 'Stop treating your database like a dumb data store. Learn advanced indexing, window functions, complex joins, and how to write efficient raw SQL to dramatically speed up your application performance.',
-            difficulty: 'Intermediate',
-            instructor: instructor.id,
-            publishedAt: new Date()
-        }
-    });
-    const course5 = await strapi.entityService.create('api::course.course', {
-        data: {
-            title: 'The Art of Refactoring Legacy Code',
-            description: 'Learn how to safely modify large, untested codebases. We will cover testing strategies, identifying code smells, the strangler fig pattern, and how to incrementally upgrade systems without halting product development.',
-            difficulty: 'Advanced',
-            instructor: instructor.id,
-            publishedAt: new Date()
-        }
-    });
-    const course6 = await strapi.entityService.create('api::course.course', {
-        data: {
-            title: 'Figma for Developers: Building Design Systems',
-            description: 'Learn how to translate Figma designs into robust, reusable code components. We will explore design tokens, atomic design principles, and how to sync design updates directly into your CI/CD pipeline.',
-            difficulty: 'Beginner',
-            instructor: instructor.id,
-            publishedAt: new Date()
-        }
-    });
-    const course7 = await strapi.entityService.create('api::course.course', {
-        data: {
-            title: 'Machine Learning Fundamentals in JavaScript',
-            description: 'You don\'t need Python to get started with AI. Learn how to train models, run inference in the browser, and implement neural networks completely in JavaScript using TensorFlow.js.',
-            difficulty: 'Intermediate',
-            instructor: instructor.id,
-            publishedAt: new Date()
-        }
-    });
-    // 3. Create Lessons for Course 1
-    const c1l1 = await strapi.entityService.create('api::lesson.lesson', {
-        data: {
-            title: 'The Fall of Monoliths',
-            order: 1,
-            content: 'For decades, monolithic architecture was the default. All components (UI, business logic, database layer) were tightly coupled into a single deployable artifact.\n\nWhile this made early development fast, it caused massive scaling issues. In this lesson, we explore the tipping point where monoliths become unmaintainable and how to identify when it is time to break them apart into microservices or decoupled head/backend models.',
-            course: course1.id,
-            publishedAt: new Date()
-        }
-    });
-    const c1l2 = await strapi.entityService.create('api::lesson.lesson', {
-        data: {
-            title: 'Embracing Headless CMS',
-            order: 2,
-            content: 'A Headless CMS provides the backend functionality (content creation, storage, and API delivery) without dictating how the content is presented. This allows developers to use any frontend technology they prefer, such as React, Vue, or even a mobile app.\n\nBy decoupling the frontend from the backend, teams can iterate faster, improve security, and scale seamlessly across multiple platforms.',
-            course: course1.id,
-            publishedAt: new Date()
-        }
-    });
-    // 4. Create Lessons for Course 2
-    const c2l1 = await strapi.entityService.create('api::lesson.lesson', {
-        data: {
-            title: 'Mastering Typography',
-            order: 1,
-            content: 'Typography is 90% of web design. The choice of typeface, line height, letter spacing, and contrast dictates the user\'s reading experience.\n\nKey Principles:\n- Never use pure black (#000) for text. Use #1f2937 or #374151 to reduce eye strain.\n- Establish a clear hierarchy using font weights (e.g., bold for headers, normal for body).\n- Keep line length between 60-80 characters for optimal readability.',
-            course: course2.id,
-            publishedAt: new Date()
-        }
-    });
-    // 5. Create Quiz for Course 1
-    const quiz1 = await strapi.entityService.create('api::quiz.quiz', {
-        data: {
-            title: 'Architecture Fundamentals Assessment',
-            course: course1.id,
-            publishedAt: new Date()
-        }
-    });
-    await strapi.entityService.create('api::question.question', {
-        data: {
-            text: 'What is the primary advantage of a Headless CMS?',
-            options: [
-                'It automatically generates the frontend UI',
-                'It decouples content management from content presentation',
-                'It requires no database to function',
-                'It only supports static websites'
-            ],
-            correctAnswer: 'It decouples content management from content presentation',
-            quiz: quiz1.id,
-            publishedAt: new Date()
-        }
-    });
-    await strapi.entityService.create('api::question.question', {
-        data: {
-            text: 'Which of the following is a common issue with monolithic architectures at scale?',
-            options: [
-                'Deployment takes a very short time',
-                'A bug in one module can crash the entire system',
-                'They are completely stateless',
-                'They force you to use JavaScript'
-            ],
-            correctAnswer: 'A bug in one module can crash the entire system',
-            quiz: quiz1.id,
-            publishedAt: new Date()
-        }
-    });
-    // 6. Create Enrollments and Progress for Student 1
-    await strapi.entityService.create('api::enrollment.enrollment', {
-        data: {
-            student: student.id,
-            course: course1.id,
-            publishedAt: new Date()
-        }
-    });
-    await strapi.entityService.create('api::lesson-progress.lesson-progress', {
-        data: {
-            student: student.id,
-            lesson: c1l1.id,
-            completed: true,
-            publishedAt: new Date()
-        }
-    });
+    if (existingDemoUser && !existingBlog) {
+        strapi.log.info('Seeding just blog posts...');
+    }
+    else {
+        // 2. Create Courses
+        const course1 = await strapi.entityService.create('api::course.course', {
+            data: {
+                title: 'Modern Web Architecture: From Zero to Hero',
+                description: 'Master the principles of scalable system design. In this comprehensive course, we dive deep into decoupled architectures, headless CMS integration, server-side rendering with Next.js, and how to orchestrate high-availability systems. Perfect for developers looking to transition into architectural roles.',
+                difficulty: 'Advanced',
+                instructor: instructor.id,
+                publishedAt: new Date()
+            }
+        });
+        const course2 = await strapi.entityService.create('api::course.course', {
+            data: {
+                title: 'UI/UX Design Essentials for Engineers',
+                description: 'Bridge the gap between engineering and design. Learn the fundamentals of color theory, typography, spacing, and modern principles like glassmorphism and subtle micro-animations. Build interfaces that wow your users without relying heavily on bloated frameworks.',
+                difficulty: 'Beginner',
+                instructor: instructor.id,
+                publishedAt: new Date()
+            }
+        });
+        const course3 = await strapi.entityService.create('api::course.course', {
+            data: {
+                title: 'Advanced React Patterns in 2026',
+                description: 'Go beyond the basics of React. Dive into Server Components, fine-grained reactivity, suspense boundaries, and custom hooks for complex state management. This course is designed for mid-level developers aiming to become seniors.',
+                difficulty: 'Advanced',
+                instructor: instructor.id,
+                publishedAt: new Date()
+            }
+        });
+        const course4 = await strapi.entityService.create('api::course.course', {
+            data: {
+                title: 'PostgreSQL Mastery for Web Developers',
+                description: 'Stop treating your database like a dumb data store. Learn advanced indexing, window functions, complex joins, and how to write efficient raw SQL to dramatically speed up your application performance.',
+                difficulty: 'Intermediate',
+                instructor: instructor.id,
+                publishedAt: new Date()
+            }
+        });
+        const course5 = await strapi.entityService.create('api::course.course', {
+            data: {
+                title: 'The Art of Refactoring Legacy Code',
+                description: 'Learn how to safely modify large, untested codebases. We will cover testing strategies, identifying code smells, the strangler fig pattern, and how to incrementally upgrade systems without halting product development.',
+                difficulty: 'Advanced',
+                instructor: instructor.id,
+                publishedAt: new Date()
+            }
+        });
+        const course6 = await strapi.entityService.create('api::course.course', {
+            data: {
+                title: 'Figma for Developers: Building Design Systems',
+                description: 'Learn how to translate Figma designs into robust, reusable code components. We will explore design tokens, atomic design principles, and how to sync design updates directly into your CI/CD pipeline.',
+                difficulty: 'Beginner',
+                instructor: instructor.id,
+                publishedAt: new Date()
+            }
+        });
+        const course7 = await strapi.entityService.create('api::course.course', {
+            data: {
+                title: 'Machine Learning Fundamentals in JavaScript',
+                description: 'You don\'t need Python to get started with AI. Learn how to train models, run inference in the browser, and implement neural networks completely in JavaScript using TensorFlow.js.',
+                difficulty: 'Intermediate',
+                instructor: instructor.id,
+                publishedAt: new Date()
+            }
+        });
+        // 3. Create Lessons for Course 1
+        const c1l1 = await strapi.entityService.create('api::lesson.lesson', {
+            data: {
+                title: 'The Fall of Monoliths',
+                order: 1,
+                content: 'For decades, monolithic architecture was the default. All components (UI, business logic, database layer) were tightly coupled into a single deployable artifact.\n\nWhile this made early development fast, it caused massive scaling issues. In this lesson, we explore the tipping point where monoliths become unmaintainable and how to identify when it is time to break them apart into microservices or decoupled head/backend models.',
+                course: course1.id,
+                publishedAt: new Date()
+            }
+        });
+        const c1l2 = await strapi.entityService.create('api::lesson.lesson', {
+            data: {
+                title: 'Embracing Headless CMS',
+                order: 2,
+                content: 'A Headless CMS provides the backend functionality (content creation, storage, and API delivery) without dictating how the content is presented. This allows developers to use any frontend technology they prefer, such as React, Vue, or even a mobile app.\n\nBy decoupling the frontend from the backend, teams can iterate faster, improve security, and scale seamlessly across multiple platforms.',
+                course: course1.id,
+                publishedAt: new Date()
+            }
+        });
+        // 4. Create Lessons for Course 2
+        const c2l1 = await strapi.entityService.create('api::lesson.lesson', {
+            data: {
+                title: 'Mastering Typography',
+                order: 1,
+                content: 'Typography is 90% of web design. The choice of typeface, line height, letter spacing, and contrast dictates the user\'s reading experience.\n\nKey Principles:\n- Never use pure black (#000) for text. Use #1f2937 or #374151 to reduce eye strain.\n- Establish a clear hierarchy using font weights (e.g., bold for headers, normal for body).\n- Keep line length between 60-80 characters for optimal readability.',
+                course: course2.id,
+                publishedAt: new Date()
+            }
+        });
+        // 5. Create Quiz for Course 1
+        const quiz1 = await strapi.entityService.create('api::quiz.quiz', {
+            data: {
+                title: 'Architecture Fundamentals Assessment',
+                course: course1.id,
+                publishedAt: new Date()
+            }
+        });
+        await strapi.entityService.create('api::question.question', {
+            data: {
+                text: 'What is the primary advantage of a Headless CMS?',
+                options: [
+                    'It automatically generates the frontend UI',
+                    'It decouples content management from content presentation',
+                    'It requires no database to function',
+                    'It only supports static websites'
+                ],
+                correctAnswer: 'It decouples content management from content presentation',
+                quiz: quiz1.id,
+                publishedAt: new Date()
+            }
+        });
+        await strapi.entityService.create('api::question.question', {
+            data: {
+                text: 'Which of the following is a common issue with monolithic architectures at scale?',
+                options: [
+                    'Deployment takes a very short time',
+                    'A bug in one module can crash the entire system',
+                    'They are completely stateless',
+                    'They force you to use JavaScript'
+                ],
+                correctAnswer: 'A bug in one module can crash the entire system',
+                quiz: quiz1.id,
+                publishedAt: new Date()
+            }
+        });
+        // 6. Create Enrollments and Progress for Student 1
+        await strapi.entityService.create('api::enrollment.enrollment', {
+            data: {
+                student: student.id,
+                course: course1.id,
+                publishedAt: new Date()
+            }
+        });
+        await strapi.entityService.create('api::lesson-progress.lesson-progress', {
+            data: {
+                student: student.id,
+                lesson: c1l1.id,
+                completed: true,
+                publishedAt: new Date()
+            }
+        });
+    } // End of conditional course seeding
     // 7. Create Blog Posts
     await strapi.entityService.create('api::blog-post.blog-post', {
         data: {
