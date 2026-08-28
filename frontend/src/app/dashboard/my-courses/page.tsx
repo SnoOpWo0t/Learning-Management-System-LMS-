@@ -60,7 +60,7 @@ export default function MyCoursesPage() {
               if (!course) return null;
               
               return (
-                <div key={enrollment.documentId} className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-gray-200/50 dark:border-slate-800/50 flex flex-col group hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+                <div key={enrollment.documentId} className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-gray-200/50 dark:border-slate-800/50 flex flex-col group hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 hover:border-blue-500/50 transition-all duration-500">
                   <div className="flex-1">
                     <div className="flex justify-between items-start mb-4">
                       <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-inner group-hover:scale-110 transition-transform">
@@ -78,7 +78,7 @@ export default function MyCoursesPage() {
                      <div className="h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
                        <div className="h-full bg-blue-500 w-[15%] rounded-full"></div>
                      </div>
-                     <Link href={`/courses/${course.documentId}`} className="block text-center px-4 py-3 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-bold w-full transition-colors border border-gray-200/50 dark:border-slate-700/50">
+                     <Link href={`/dashboard/courses/${course.documentId}/learn`} className="block text-center px-4 py-3 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-bold w-full transition-colors border border-gray-200/50 dark:border-slate-700/50">
                        Continue Learning
                      </Link>
                   </div>

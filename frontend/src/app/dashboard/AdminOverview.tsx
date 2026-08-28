@@ -37,26 +37,26 @@ export default function AdminOverview() {
         fetchAPI('/courses', { headers: { Authorization: `Bearer ${token}` } }),
         fetchAPI('/enrollments', { headers: { Authorization: `Bearer ${token}` } }),
       ]);
-      
+
       const users = usersRes || [];
       const courses = coursesRes.data || [];
       const enrollments = enrollmentsRes.data || [];
-      
+
       setStats({
         users: users.length,
         courses: courses.length,
         enrollments: enrollments.length
       });
-      
+
       // Calculate role distribution
       const rolesCount: Record<string, number> = {};
       users.forEach((u: any) => {
         const role = u.role?.name || 'No Role';
         rolesCount[role] = (rolesCount[role] || 0) + 1;
       });
-      
+
       setRoleDistribution(Object.keys(rolesCount).map(key => ({ name: key, value: rolesCount[key] })));
-      
+
     } catch (err) {
       console.error('Failed to fetch analytics', err);
     } finally {
@@ -70,7 +70,7 @@ export default function AdminOverview() {
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-gray-100 dark:border-slate-800 shadow-sm" style={{ position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 0, right: 0, width: '16rem', height: '16rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '9999px', filter: 'blur(48px)', transform: 'translate(30%, -50%)' }}></div>
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '16rem', height: '16rem', background: 'rgba(168, 85, 247, 0.1)', borderRadius: '9999px', filter: 'blur(48px)', transform: 'translate(-30%, 30%)' }}></div>
-        
+
         <div style={{ position: 'relative', zIndex: 10 }}>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Admin Workspace 👋
@@ -139,7 +139,7 @@ export default function AdminOverview() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
                   </PieChart>

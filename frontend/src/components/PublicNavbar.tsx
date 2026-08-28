@@ -31,19 +31,19 @@ export default function PublicNavbar() {
           ) : user ? (
             <Link 
               href="/dashboard" 
-              className="px-5 py-2.5 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-semibold rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-all flex items-center gap-2 shadow-sm border border-blue-100 dark:border-blue-800/50"
+              className="group px-5 py-2.5 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-semibold rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-all duration-300 flex items-center gap-2 shadow-sm border border-blue-100 dark:border-blue-800/50 hover:shadow-md hover:-translate-y-0.5"
             >
               Dashboard
-              <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-inner">
+              <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-inner group-hover:scale-110 transition-transform duration-300">
                 {user.username?.[0]?.toUpperCase() || 'U'}
               </div>
             </Link>
           ) : (
             <>
-              <Link href="/login" className="text-gray-600 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link href="/login" className="text-gray-600 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 hover:drop-shadow-sm">
                 Login
               </Link>
-              <Link href="/register" className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 transition-all hover:shadow-md hover:-translate-y-0.5 ml-1">
+              <Link href="/register" className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-1 ml-1">
                 Get Started
               </Link>
             </>

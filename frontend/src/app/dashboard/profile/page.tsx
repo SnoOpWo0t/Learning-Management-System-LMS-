@@ -12,6 +12,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   
   const [username, setUsername] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [bio, setBio] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -22,6 +23,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       setUsername(user.username || '');
+      setPhoneNumber(user.phoneNumber || '');
       setBio(user.bio || '');
       if (user.avatar?.url) {
         setAvatarPreview(`${API_URL}${user.avatar.url}`);
@@ -68,10 +70,11 @@ export default function ProfilePage() {
       const updateData: any = {
         username,
         bio,
+        phoneNumber,
       };
       if (avatarId) updateData.avatar = avatarId;
 
-      const updateRes = await fetch(`${API_URL}/api/users/${user.id}`, {
+      const updateRes = await fetch(`${API_URL}/api/custom-auth/me`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -96,6 +99,7 @@ export default function ProfilePage() {
   const handleCancel = () => {
     setIsEditing(false);
     setUsername(user?.username || '');
+    setPhoneNumber(user?.phoneNumber || '');
     setBio(user?.bio || '');
     setAvatarFile(null);
     setAvatarPreview(user?.avatar?.url ? `${API_URL}${user.avatar.url}` : null);
@@ -120,9 +124,10 @@ export default function ProfilePage() {
         <div className="relative z-10 flex flex-col md:flex-row gap-10 items-start">
           
           {/* Avatar Section */}
-          <div className="flex flex-col items-center space-y-4">
+          <div className="flex flex-col items-center space-y-4 shrink-0" style={{ minWidth: '200px' }}>
             <div 
-              className="relative w-36 h-36 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-5xl font-black shadow-inner border-4 border-white dark:border-slate-800 overflow-hidden group"
+              className="relative shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-5xl font-black shadow-inner border-4 border-white dark:border-slate-800 overflow-hidden group"
+              style={{ width: '144px', height: '144px' }}
             >
               {avatarPreview ? (
                 <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
@@ -161,7 +166,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Profile Details Section */}
-          <div className="flex-1 space-y-8 w-full">
+          <div className="flex-1 space-y-8 w-full min-w-0">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               
               <div className="space-y-2">
@@ -181,11 +186,28 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-500 dark:text-gray-400">Email Address</label>
+                <label className="text-sm font-semibold text-gray-500 dark:text-gray-400">Email Address (Gmail)</label>
                 <p className="text-lg font-medium text-gray-600 dark:text-gray-400 p-3 bg-gray-100/50 dark:bg-slate-800/30 rounded-xl border border-transparent cursor-not-allowed">
                   {user?.email}
                 </p>
                 {isEditing && <p className="text-xs text-gray-400">Email cannot be changed directly.</p>}
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-semibold text-gray-500 dark:text-gray-400">Phone Number</label>
+                {isEditing ? (
+                  <input 
+                    type="tel" 
+                    value={phoneNumber} 
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+1 (555) 000-0000"
+                    className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white" 
+                  />
+                ) : (
+                  <p className="text-lg font-medium text-gray-900 dark:text-white p-3 bg-gray-50/50 dark:bg-slate-800/50 rounded-xl border border-transparent">
+                    {user?.phoneNumber || <span className="italic text-gray-400">Not provided</span>}
+                  </p>
+                )}
               </div>
               
             </div>

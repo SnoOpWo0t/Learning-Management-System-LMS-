@@ -6,9 +6,11 @@ exports.default = {
             method: 'GET',
             path: '/custom-auth/me',
             handler: 'custom-auth.me',
-            config: {
-                auth: false,
-            },
+        },
+        {
+            method: 'PUT',
+            path: '/custom-auth/me',
+            handler: 'custom-auth.updateMe',
         },
     ],
 };

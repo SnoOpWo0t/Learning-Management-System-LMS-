@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { fetchAPI } from '@/lib/api';
 import PublicNavbar from '@/components/PublicNavbar';
+import Footer from '@/components/Footer';
 
-export const revalidate = 60;
+export const revalidate = 0;
 
 export default async function HomePage() {
   let courses = [];
@@ -62,8 +63,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Categories Section */}
-        <section className="py-24 px-6 bg-gray-50 dark:bg-transparent text-gray-900 dark:text-white relative z-20 border-t border-gray-200 dark:border-white/5">
+        <section className="pt-24 pb-40 px-6 bg-gray-50 dark:bg-transparent text-gray-900 dark:text-white relative z-20 border-t border-gray-200 dark:border-white/5">
           <div className="max-w-7xl mx-auto">
             <div className="mb-16 max-w-3xl">
               <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">Curated Learning Paths.</h2>
@@ -75,7 +75,7 @@ export default async function HomePage() {
                 <p className="text-lg font-medium text-gray-500 dark:text-gray-400">No courses available at the moment.</p>
               </div>
             ) : (
-              <div className="space-y-24">
+              <div className="space-y-32">
                 {categorizedCourses.Beginner.length > 0 && (
                   <CategorySection title="Beginner Essentials" courses={categorizedCourses.Beginner} />
                 )}
@@ -91,89 +91,10 @@ export default async function HomePage() {
         </section>
       </main>
 
-      {/* CTA Section (Reference Image Style) */}
-      <section className="bg-slate-800 dark:bg-slate-900 py-24 px-6 border-t border-slate-700/50">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
-          <h2 className="text-3xl md:text-4xl font-serif text-white tracking-wide">
-            Ready to start learning?
-          </h2>
-          <div className="w-full md:max-w-md">
-            <form className="flex w-full items-center border border-slate-500 rounded-sm focus-within:border-white transition-colors">
-              <input 
-                type="email" 
-                placeholder="Enter your email" 
-                className="w-full bg-transparent text-white px-4 py-3 outline-none placeholder:text-slate-400"
-              />
-              <button 
-                type="submit" 
-                className="text-white font-medium px-6 py-3 hover:bg-white/10 transition-colors border-l border-slate-500"
-              >
-                Submit
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
 
-      {/* Deep Dark Footer (Reference Image Style) */}
-      <footer className="bg-[#0f0a14] dark:bg-black pt-20 pb-10 text-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
-            {/* Branding Column */}
-            <div className="flex flex-col lg:pr-12">
-              <span className="text-3xl font-black tracking-widest mb-6 uppercase">LMS<span className="text-blue-500">.</span></span>
-              <p className="text-slate-300 text-sm leading-relaxed mb-6 font-medium">
-                Premium educational content designed to elevate your career and skills.
-              </p>
-              <p className="text-white font-bold text-sm">
-                Join our community @LMSPlatform
-              </p>
-            </div>
-            
-            {/* Link Column 1 */}
-            <div className="flex flex-col">
-              <h4 className="font-bold text-white mb-6">Platform</h4>
-              <div className="flex flex-col gap-4 text-sm text-slate-300">
-                <Link href="#" className="hover:text-white transition-colors">All Courses</Link>
-                <Link href="#" className="hover:text-white transition-colors">Career Paths</Link>
-                <Link href="#" className="hover:text-white transition-colors">Instructors</Link>
-                <Link href="#" className="hover:text-white transition-colors">Pricing</Link>
-              </div>
-            </div>
-            
-            {/* Link Column 2 */}
-            <div className="flex flex-col">
-              <h4 className="font-bold text-white mb-6">Quick Links</h4>
-              <div className="flex flex-col gap-4 text-sm text-slate-300">
-                <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
-                <Link href="/login" className="hover:text-white transition-colors">Student Login</Link>
-                <Link href="/register" className="hover:text-white transition-colors">Register</Link>
-                <Link href="#" className="hover:text-white transition-colors">Help Center</Link>
-              </div>
-            </div>
-            
-            {/* Link Column 3 */}
-            <div className="flex flex-col">
-              <h4 className="font-bold text-white mb-6">Stay In Touch</h4>
-              <div className="flex flex-col gap-4 text-sm text-slate-300">
-                <Link href="#" className="hover:text-white transition-colors">Twitter</Link>
-                <Link href="#" className="hover:text-white transition-colors">LinkedIn</Link>
-                <Link href="#" className="hover:text-white transition-colors">YouTube</Link>
-                <Link href="#" className="hover:text-white transition-colors">GitHub</Link>
-              </div>
-            </div>
-          </div>
-          
-          {/* Bottom Bar */}
-          <div className="pt-8 border-t border-slate-800 flex flex-col-reverse md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
-            <p>&copy; 2026 LMS Platform. All rights reserved.</p>
-            <div className="flex gap-6">
-              <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="#" className="hover:text-white transition-colors">Terms</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+
+      {/* Reusable Footer Component */}
+      <Footer />
     </div>
   );
 }
@@ -194,27 +115,37 @@ function CategorySection({ title, courses }: { title: string, courses: any[] }) 
 
 function CourseCard({ course }: { course: any }) {
   return (
-    <Link href={`/courses/${course.documentId}`} className="group flex flex-col bg-white dark:bg-white/5 rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 dark:hover:shadow-blue-500/10 hover:-translate-y-2 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all duration-300">
-      <div className="aspect-[16/9] w-full bg-gray-100 dark:bg-white/5 relative overflow-hidden border-b border-gray-100 dark:border-white/5">
+    <Link href={`/courses/${course.documentId}`} className="group flex flex-col bg-white dark:bg-white/5 rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-2xl hover:shadow-blue-900/10 dark:hover:shadow-blue-500/20 hover:-translate-y-2 hover:border-blue-300 dark:hover:border-blue-500/50 transition-all duration-500">
+      <div className="h-48 w-full bg-gray-100 dark:bg-white/5 relative overflow-hidden border-b border-gray-100 dark:border-white/5">
          <img 
            src={`https://picsum.photos/seed/${course.documentId}/800/450`} 
            alt={course.title} 
-           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
          />
-         <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-gray-900 dark:text-white border border-black/5 dark:border-white/10 shadow-sm">
+         <div className="absolute inset-0 bg-blue-900/0 group-hover:bg-blue-900/20 dark:group-hover:bg-blue-500/10 transition-colors duration-500" />
+         <div className="absolute top-3 left-3 bg-white/95 dark:bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white border border-black/5 dark:border-white/10 shadow-sm">
            {course.difficulty}
          </div>
       </div>
       
-      <div className="p-6 flex flex-col flex-1">
-        <h4 className="text-lg font-semibold mb-2 line-clamp-2 text-gray-900 dark:text-white leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{course.title}</h4>
-        <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 mb-6 flex-1">{course.description}</p>
+      <div className="p-6 flex flex-col flex-1 relative">
+        <h4 className="text-xl font-bold mb-3 line-clamp-2 text-gray-900 dark:text-white leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 pr-8">{course.title}</h4>
         
-        <div className="flex items-center gap-3 mt-auto">
-           <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-gray-300 ring-1 ring-gray-200 dark:ring-white/10">
+        {/* Animated Arrow */}
+        <div className="absolute top-6 right-6 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-blue-600 dark:text-blue-400">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+        </div>
+
+        <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-3 mb-8 flex-1 leading-relaxed">{course.description}</p>
+        
+        <div className="flex items-center gap-3 mt-auto pt-4 border-t border-gray-100 dark:border-white/5">
+           <div 
+             className="rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-300 ring-1 ring-blue-100 dark:ring-blue-500/20"
+             style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', flexShrink: 0 }}
+           >
              {course.instructor?.username?.[0]?.toUpperCase() || 'I'}
            </div>
-           <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{course.instructor?.username || 'Instructor'}</span>
+           <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{course.instructor?.username || 'Instructor'}</span>
         </div>
       </div>
     </Link>

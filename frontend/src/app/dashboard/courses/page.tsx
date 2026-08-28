@@ -84,7 +84,10 @@ export default function BrowseCoursesPage() {
                   
                   <div className="pt-4 mt-auto border-t border-gray-100 dark:border-slate-800/50 flex flex-col gap-4">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 font-medium">
-                       <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xs shadow-inner">
+                       <div 
+                         className="rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xs shadow-inner"
+                         style={{ width: '24px', height: '24px', minWidth: '24px', minHeight: '24px', flexShrink: 0 }}
+                       >
                          {course.instructor?.username?.[0]?.toUpperCase() || 'I'}
                        </div>
                        {course.instructor?.username || 'Instructor'}

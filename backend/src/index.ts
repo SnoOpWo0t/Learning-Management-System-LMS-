@@ -2,25 +2,7 @@ import type { Core } from '@strapi/strapi';
 
 export default {
   register({ strapi }: { strapi: Core.Strapi }) {
-    // Add custom fields to users-permissions user
-    if (strapi.plugin('users-permissions')) {
-      const userSchema = strapi.plugin('users-permissions').contentTypes.user;
-      
-      if (userSchema && userSchema.schema && userSchema.schema.attributes) {
-        // @ts-ignore
-        userSchema.schema.attributes.avatar = {
-          type: 'media',
-          multiple: false,
-          required: false,
-          allowedTypes: ['images'],
-        };
-        
-        // @ts-ignore
-        userSchema.schema.attributes.bio = {
-          type: 'text',
-        };
-      }
-    }
+    // Custom fields are now added via src/extensions/users-permissions/content-types/user/schema.json
   },
 
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
@@ -100,6 +82,8 @@ async function grantPublicPermissions(strapi: Core.Strapi) {
     'plugin::users-permissions.user.find',
     'api::blog-post.blog-post.find',
     'api::blog-post.blog-post.findOne',
+    'api::course-rating.course-rating.find',
+    'api::course-rating.course-rating.findOne',
   ];
 
   for (const action of permissionsToGrant) {
@@ -135,6 +119,8 @@ async function grantRolePermissions(strapi: Core.Strapi) {
     'plugin::users-permissions.user.update',
     'plugin::users-permissions.user.find', // Required to link user relation on content creation
     'plugin::upload.content-api.upload',
+    'api::custom-auth.custom-auth.me',
+    'api::custom-auth.custom-auth.updateMe',
   ];
 
   const adminPermissions = [
@@ -153,6 +139,8 @@ async function grantRolePermissions(strapi: Core.Strapi) {
     'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy',
     // Progress / Enrollments
     'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
+    // Ratings
+    'api::course-rating.course-rating.find', 'api::course-rating.course-rating.findOne', 'api::course-rating.course-rating.create', 'api::course-rating.course-rating.update', 'api::course-rating.course-rating.destroy',
   ];
 
   const cmPermissions = [
@@ -168,6 +156,8 @@ async function grantRolePermissions(strapi: Core.Strapi) {
     'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy',
     // Progress / Enrollments
     'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
+    // Ratings
+    'api::course-rating.course-rating.find', 'api::course-rating.course-rating.findOne', 'api::course-rating.course-rating.destroy',
   ];
 
   const instructorPermissions = [
@@ -181,6 +171,8 @@ async function grantRolePermissions(strapi: Core.Strapi) {
     'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
     // Progress / Enrollments
     'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
+    // Ratings
+    'api::course-rating.course-rating.find', 'api::course-rating.course-rating.findOne',
   ];
 
   const studentPermissions = [
@@ -192,8 +184,11 @@ async function grantRolePermissions(strapi: Core.Strapi) {
     'api::enrollment.enrollment.create', 'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne',
     // Take quizzes
     'api::quiz-result.quiz-result.create', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
+    'api::quiz.quiz.submit', 'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::question.question.find', 'api::question.question.findOne',
     // Progress
     'api::lesson-progress.lesson-progress.create', 'api::lesson-progress.lesson-progress.update', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+    // Ratings
+    'api::course-rating.course-rating.find', 'api::course-rating.course-rating.findOne', 'api::course-rating.course-rating.create',
   ];
 
   const grant = async (roleId: number, permissions: string[]) => {

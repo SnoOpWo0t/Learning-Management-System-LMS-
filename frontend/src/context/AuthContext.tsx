@@ -16,6 +16,7 @@ export interface User {
     id: number;
     url: string;
   } | null;
+  phoneNumber?: string;
 }
 
 interface AuthContextType {
@@ -104,6 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           roleType,
           bio: fullUserData.bio,
           avatar: fullUserData.avatar,
+          phoneNumber: fullUserData.phoneNumber,
         });
       }
     } catch (error) {
