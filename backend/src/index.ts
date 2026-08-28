@@ -152,7 +152,7 @@ async function grantRolePermissions(strapi: Core.Strapi) {
     // Blogs
     'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy',
     // Progress / Enrollments
-    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
   ];
 
   const cmPermissions = [
@@ -167,7 +167,7 @@ async function grantRolePermissions(strapi: Core.Strapi) {
     // Blogs
     'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy',
     // Progress / Enrollments
-    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
   ];
 
   const instructorPermissions = [
@@ -180,7 +180,7 @@ async function grantRolePermissions(strapi: Core.Strapi) {
     'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy',
     'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
     // Progress / Enrollments
-    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne',
+    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
   ];
 
   const studentPermissions = [

@@ -30,6 +30,18 @@ export default factories.createCoreController('api::course.course', ({ strapi })
     return response;
   },
 
+  async find(ctx) {
+    const user = ctx.state.user;
+    // Public users and Students can see courses (handled by Strapi's public permissions or default logic)
+    // But if it's an Instructor, we should strictly filter to only show their courses
+    if (user && user.role?.name === 'Instructor') {
+      const filters = (ctx.query.filters as any) || {};
+      ctx.query.filters = { ...filters, instructor: { documentId: user.documentId } };
+    }
+
+    return super.find(ctx);
+  },
+
   async update(ctx) {
     const user = ctx.state.user;
     const { id } = ctx.params;

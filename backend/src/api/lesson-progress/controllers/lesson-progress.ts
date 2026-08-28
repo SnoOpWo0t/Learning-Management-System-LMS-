@@ -48,5 +48,21 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
     ctx.request.body.data.completed = true;
 
     return super.create(ctx);
+  },
+
+  async find(ctx) {
+    const user = ctx.state.user;
+    if (!user) return ctx.unauthorized();
+    const roleName = user.role?.name;
+
+    const filters = (ctx.query.filters as any) || {};
+
+    if (roleName === 'Student') {
+      ctx.query.filters = { ...filters, student: { documentId: user.documentId } };
+    } else if (roleName === 'Instructor') {
+      ctx.query.filters = { ...filters, lesson: { course: { instructor: { documentId: user.documentId } } } };
+    }
+
+    return super.find(ctx);
   }
 }));

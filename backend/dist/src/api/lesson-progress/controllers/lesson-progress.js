@@ -40,5 +40,20 @@ exports.default = strapi_1.factories.createCoreController('api::lesson-progress.
         ctx.request.body.data.student = targetStudent;
         ctx.request.body.data.completed = true;
         return super.create(ctx);
+    },
+    async find(ctx) {
+        var _a;
+        const user = ctx.state.user;
+        if (!user)
+            return ctx.unauthorized();
+        const roleName = (_a = user.role) === null || _a === void 0 ? void 0 : _a.name;
+        const filters = ctx.query.filters || {};
+        if (roleName === 'Student') {
+            ctx.query.filters = { ...filters, student: { documentId: user.documentId } };
+        }
+        else if (roleName === 'Instructor') {
+            ctx.query.filters = { ...filters, lesson: { course: { instructor: { documentId: user.documentId } } } };
+        }
+        return super.find(ctx);
     }
 }));

@@ -16,7 +16,7 @@ export default function ManageBlogsPage() {
   // Form State
   const [formData, setFormData] = useState({
     title: '',
-    content: '',
+    body: '',
     status: 'Draft',
   });
   const [saving, setSaving] = useState(false);
@@ -41,7 +41,7 @@ export default function ManageBlogsPage() {
   }, [token]);
 
   const openCreateModal = () => {
-    setFormData({ title: '', content: '', status: 'Draft' });
+    setFormData({ title: '', body: '', status: 'Draft' });
     setEditingBlog(null);
     setIsModalOpen(true);
   };
@@ -49,7 +49,7 @@ export default function ManageBlogsPage() {
   const openEditModal = (blog: any) => {
     setFormData({ 
       title: blog.title, 
-      content: blog.content, 
+      body: blog.body, 
       status: blog.status || 'Draft' 
     });
     setEditingBlog(blog);
@@ -193,7 +193,7 @@ export default function ManageBlogsPage() {
                   <textarea 
                     required rows={5}
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl dark:text-white"
-                    value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})}
+                    value={formData.body} onChange={e => setFormData({...formData, body: e.target.value})}
                   />
                 </div>
                 <div>

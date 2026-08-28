@@ -62,19 +62,18 @@ export default factories.createCoreController('api::quiz-result.quiz-result', ({
   },
   
   async find(ctx) {
-    // Only return the current student's results unless Admin/Instructor
     const user = ctx.state.user;
     if (!user) return ctx.unauthorized();
 
     const roleName = user.role?.name;
+    
+    const filters = (ctx.query.filters as any) || {};
+    
     if (roleName === 'Student') {
-      ctx.query.filters = {
-        ...(ctx.query.filters as any),
-        student: user.id
-      };
+      ctx.query.filters = { ...filters, student: { documentId: user.documentId } };
+    } else if (roleName === 'Instructor') {
+      ctx.query.filters = { ...filters, quiz: { course: { instructor: { documentId: user.documentId } } } };
     }
-    // Instructors should technically only see results for their courses, but for simplicity
-    // we let admins see all. Let's just use Strapi's default behavior for others.
 
     return super.find(ctx);
   }

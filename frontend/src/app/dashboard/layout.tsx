@@ -50,10 +50,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                   {/* Instructor / Content Manager Links */}
                   {(user?.roleType === 'Instructor' || user?.roleType === 'Content Manager' || user?.roleType === 'Admin') && (
-                    <>
-                      <Link href="/dashboard/manage-courses" className={getLinkClass('/dashboard/manage-courses')}>Manage Courses</Link>
-                      <Link href="/dashboard/blogs" className={getLinkClass('/dashboard/blogs')}>Manage Blogs</Link>
-                    </>
+                    <Link href="/dashboard/manage-courses" className={getLinkClass('/dashboard/manage-courses')}>Manage Courses</Link>
+                  )}
+
+                  {/* Blogs (Admin & Content Manager only) */}
+                  {(user?.roleType === 'Content Manager' || user?.roleType === 'Admin') && (
+                    <Link href="/dashboard/blogs" className={getLinkClass('/dashboard/blogs')}>Manage Blogs</Link>
                   )}
 
                   {/* Admin Links */}
