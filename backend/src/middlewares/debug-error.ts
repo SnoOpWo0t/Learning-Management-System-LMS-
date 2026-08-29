@@ -3,7 +3,7 @@ export default () => {
     try {
       await next();
     } catch (err: any) {
-      ctx.status = err.status || 500;
+      ctx.status = 418;
       ctx.body = {
         error: "CUSTOM_ERROR_CATCH",
         message: err.message,
