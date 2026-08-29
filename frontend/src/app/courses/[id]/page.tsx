@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PublicNavbar from '@/components/PublicNavbar';
 import Footer from '@/components/Footer';
+import EnrollButton from '@/components/EnrollButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -188,15 +189,7 @@ export default async function PublicCoursePage({ params }: { params: Promise<{ i
               <p className="text-xs font-bold text-gray-500 dark:text-gray-500 mt-2 uppercase tracking-widest">Full lifetime access</p>
             </div>
             
-            <Link 
-              href={`/login`} 
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-blue-500 hover:to-purple-500 transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-1 flex items-center justify-center gap-2"
-            >
-              Sign in to Enroll
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </Link>
+            <EnrollButton courseId={id} />
             
             <div className="text-sm text-gray-600 dark:text-gray-400 space-y-4 mt-6 pt-6 border-t border-gray-100 dark:border-white/10 font-medium text-left px-2">
               <p className="flex items-center gap-3">
