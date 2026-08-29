@@ -177,13 +177,13 @@ function StudentOverview() {
             <Link href="/dashboard/my-courses" className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline">View all</Link>
           </div>
           
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-6 items-start sm:items-center group hover:border-blue-200 dark:hover:border-blue-800/50 transition-colors">
-            <div className="w-full sm:w-48 aspect-video bg-gray-100 dark:bg-slate-800 rounded-2xl overflow-hidden shrink-0 relative">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center group hover:border-blue-200 dark:hover:border-blue-800/50 transition-colors overflow-hidden">
+            <div className="w-full md:w-64 aspect-video bg-gray-100 dark:bg-slate-800 rounded-2xl overflow-hidden shrink-0 relative">
                <img src="https://picsum.photos/seed/advanced-react/400/300" alt="Course" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                <div className="absolute inset-0 bg-black/10"></div>
             </div>
             
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 w-full">
               <div className="inline-flex items-center px-2.5 py-1 mb-3 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold tracking-wide uppercase">
                 Web Development
               </div>
@@ -200,8 +200,8 @@ function StudentOverview() {
               </div>
             </div>
             
-            <div className="w-full sm:w-auto mt-4 sm:mt-0">
-              <Link href="/dashboard/my-courses" className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-gray-900 dark:text-white font-medium rounded-xl transition-colors">
+            <div className="w-full md:w-auto mt-4 md:mt-0 shrink-0">
+              <Link href="/dashboard/my-courses" className="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-gray-900 dark:text-white font-medium rounded-xl transition-colors">
                 Resume
               </Link>
             </div>
