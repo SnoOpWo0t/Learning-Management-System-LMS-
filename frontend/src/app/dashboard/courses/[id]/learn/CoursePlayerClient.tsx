@@ -226,7 +226,7 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
     }
     try {
       setSubmittingQuiz(true);
-      const res = await fetchAPI(`/quizzes/${activeQuiz.documentId}/submit`, {
+      const res = await fetchAPI(`/quizzes/${activeQuiz.documentId || activeQuiz.id}/submit`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify({ answers })
@@ -238,9 +238,9 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
         });
         triggerConfetti();
       }
-    } catch (err) {
-      console.error(err);
-      alert('Failed to submit quiz.');
+    } catch (err: any) {
+      console.error('Quiz submit error:', err);
+      alert(err.message || 'Failed to submit quiz.');
     } finally {
       setSubmittingQuiz(false);
     }
