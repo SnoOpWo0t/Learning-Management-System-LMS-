@@ -11,9 +11,14 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
       return ctx.badRequest('Lesson is required');
     }
 
-    // Force student to use either ID or documentId safely
-    const targetStudentId = user.id;
-    const targetStudentDocId = user.documentId;
+    // Force student to use documentId safely
+    let targetStudentDocId = user.documentId;
+    
+    if (!targetStudentDocId) {
+      const userObj = await strapi.db.query('plugin::users-permissions.user').findOne({ where: { id: user.id } });
+      if (!userObj || !userObj.documentId) return ctx.badRequest('Could not resolve user documentId');
+      targetStudentDocId = userObj.documentId;
+    }
 
     try {
       // 1. Fetch the lesson to ensure it exists and get its course using documents API
@@ -35,7 +40,7 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
       // 2. Ensure user is enrolled in the course
       const enrollments = await strapi.documents('api::enrollment.enrollment').findMany({
         filters: {
-          student: { documentId: targetStudentDocId || targetStudentId },
+          student: { documentId: targetStudentDocId },
           course: { documentId: lessonEntity.course.documentId }
         }
       });
@@ -47,7 +52,7 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
       // 3. Check for duplicate progress
       const existingProgress = await strapi.documents('api::lesson-progress.lesson-progress').findMany({
         filters: {
-          student: { documentId: targetStudentDocId || targetStudentId },
+          student: { documentId: targetStudentDocId },
           lesson: { documentId: lessonEntity.documentId }
         }
       });
@@ -59,7 +64,7 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
       // 4. Create manually to bypass any super.create relation payload bugs in v5
       const progress = await strapi.documents('api::lesson-progress.lesson-progress').create({
         data: {
-          student: targetStudentDocId || targetStudentId,
+          student: targetStudentDocId,
           lesson: lessonEntity.documentId,
           completed: true,
           publishedAt: new Date()

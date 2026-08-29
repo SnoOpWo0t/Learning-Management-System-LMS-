@@ -10,55 +10,74 @@ export default factories.createCoreController('api::quiz-result.quiz-result', ({
     if (!quiz) return ctx.badRequest('Quiz ID is required');
     if (!answers || typeof answers !== 'object') return ctx.badRequest('Answers object is required');
 
-    // Fetch quiz with its questions
-    const quizEntity: any = await strapi.entityService.findOne('api::quiz.quiz', quiz, {
-      populate: ['questions', 'course']
-    });
+    // Normalize user documentId
+    let targetStudentDocId = user.documentId;
+    if (!targetStudentDocId) {
+      const userObj = await strapi.db.query('plugin::users-permissions.user').findOne({ where: { id: user.id } });
+      if (!userObj || !userObj.documentId) return ctx.badRequest('Could not resolve user documentId');
+      targetStudentDocId = userObj.documentId;
+    }
 
-    if (!quizEntity) return ctx.notFound('Quiz not found');
-
-    // Make sure user is enrolled in the course this quiz belongs to
-    if (quizEntity.course) {
-      const enrollments = await strapi.entityService.findMany('api::enrollment.enrollment', {
-        filters: { student: user.id, course: quizEntity.course.id }
+    try {
+      // Fetch quiz with its questions using documents API to safely handle documentId
+      const quizzes = await strapi.documents('api::quiz.quiz').findMany({
+        filters: { documentId: quiz },
+        populate: ['questions', 'course']
       });
-      if (!enrollments || enrollments.length === 0) {
-        return ctx.forbidden('You are not enrolled in this course');
+
+      if (!quizzes || quizzes.length === 0) return ctx.notFound('Quiz not found');
+      const quizEntity = quizzes[0];
+
+      // Make sure user is enrolled in the course this quiz belongs to
+      if (quizEntity.course) {
+        const enrollments = await strapi.documents('api::enrollment.enrollment').findMany({
+          filters: { student: { documentId: targetStudentDocId }, course: { documentId: quizEntity.course.documentId } }
+        });
+        if (!enrollments || enrollments.length === 0) {
+          return ctx.forbidden('You are not enrolled in this course');
+        }
       }
-    }
 
-    // Calculate Score
-    const questions = quizEntity.questions || [];
-    let correctAnswers = 0;
-    const totalQuestions = questions.length;
+      // Calculate Score
+      const questions = quizEntity.questions || [];
+      let correctAnswers = 0;
+      const totalQuestions = questions.length;
 
-    for (const question of questions) {
-      // Find what the user submitted for this question
-      const submittedAnswer = answers[question.documentId];
-      if (submittedAnswer && submittedAnswer === question.correctAnswer) {
-        correctAnswers++;
+      for (const question of questions) {
+        // Find what the user submitted for this question (by documentId)
+        const submittedAnswer = answers[question.documentId];
+        if (submittedAnswer && submittedAnswer === question.correctAnswer) {
+          correctAnswers++;
+        }
       }
+
+      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+
+      // Check if a result already exists to prevent duplicate entries if desired, but we'll just create a new one
+      const result = await strapi.documents('api::quiz-result.quiz-result').create({
+        data: {
+          student: targetStudentDocId,
+          quiz: quizEntity.documentId,
+          score: score,
+          totalQuestions: totalQuestions,
+          publishedAt: new Date()
+        }
+      });
+      
+      // Attach detailed scoring for the frontend to show immediately (in a custom structure since we aren't using super.create)
+      return {
+        data: {
+          ...result,
+          score,
+          totalQuestions,
+          correctAnswers // Custom prop for immediate feedback
+        }
+      };
+      
+    } catch (err) {
+      console.error('Error submitting quiz:', err);
+      return ctx.badRequest('Failed to submit quiz: ' + err.message);
     }
-
-    const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-
-    // Check if a result already exists, if so update it or just create a new one. The requirements 
-    // say "Student's quiz result is stored and viewable later". We can store multiple attempts or just one.
-    // Let's just create a new one.
-
-    ctx.request.body.data = {
-      student: user.id,
-      quiz: quiz,
-      score: score,
-      totalQuestions: totalQuestions
-    };
-
-    const response = await super.create(ctx);
-    
-    // Attach detailed scoring for the frontend to show immediately
-    response.data.attributes.correctAnswers = correctAnswers;
-    
-    return response;
   },
   
   async find(ctx) {
