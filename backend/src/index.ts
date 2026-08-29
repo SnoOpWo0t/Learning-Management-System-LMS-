@@ -1,5 +1,8 @@
 import type { Core } from '@strapi/strapi';
+import dns from 'dns';
 
+// Fix for Node >= 20 and pg module AggregateError on Railway internal network
+dns.setDefaultResultOrder('ipv4first');
 export default {
   register({ strapi }: { strapi: Core.Strapi }) {
     // Custom fields are now added via src/extensions/users-permissions/content-types/user/schema.json

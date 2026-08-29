@@ -1,6 +1,10 @@
 import path from 'path';
+import dns from 'dns';
 import type { Core } from '@strapi/strapi';
 import { isDatabaseClientKind } from '@strapi/database';
+
+// Fix for Node >= 20 and pg module AggregateError on Railway internal network (Happy Eyeballs bug)
+dns.setDefaultResultOrder('ipv4first');
 
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database => {
   const defaultClient = env('DATABASE_URL') ? 'postgres' : 'sqlite';
