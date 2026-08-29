@@ -577,5 +577,28 @@ async function seedDemoData(strapi: Core.Strapi) {
     }
   }
 
+  const existingReview = await strapi.db.query('api::course-rating.course-rating').findOne({
+    where: { student: { email: 'student2@demo.com' } }
+  });
+
+  if (!existingReview) {
+    const s2Query = await strapi.db.query('plugin::users-permissions.user').findOne({
+      where: { email: 'student2@demo.com' }
+    });
+    const c1Query = await strapi.db.query('api::course.course').findMany();
+    if (s2Query && c1Query.length > 0) {
+      await strapi.entityService.create('api::course-rating.course-rating', {
+        data: {
+          student: s2Query.id,
+          course: c1Query[0].id,
+          rating: 5,
+          review: 'This course is phenomenal! The security modules really helped clarify how XSS and CSRF work under the hood. Highly recommend for anyone looking to build robust applications.',
+          publishedAt: new Date()
+        } as any
+      });
+      strapi.log.info('Seeded a 5-star review for Student 2.');
+    }
+  }
+
   strapi.log.info('Successfully seeded demo data!');
 }
