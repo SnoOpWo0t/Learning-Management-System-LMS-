@@ -1,5 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const dns_1 = __importDefault(require("dns"));
+// Fix for Node >= 20 and pg module AggregateError on Railway internal network
+dns_1.default.setDefaultResultOrder('ipv4first');
 exports.default = {
     register({ strapi }) {
         // Custom fields are now added via src/extensions/users-permissions/content-types/user/schema.json
