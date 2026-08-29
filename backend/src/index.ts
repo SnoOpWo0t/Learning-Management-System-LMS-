@@ -5,7 +5,8 @@ import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
 export default {
   register({ strapi }: { strapi: Core.Strapi }) {
-    // Custom fields are now added via src/extensions/users-permissions/content-types/user/schema.json
+    // Trust reverse proxy (Railway/Heroku/etc.) so secure cookies work over HTTPS
+    strapi.server.app.proxy = true;
   },
 
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
