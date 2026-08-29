@@ -440,5 +440,78 @@ async function seedDemoData(strapi) {
             publishedAt: new Date()
         }
     });
+    const existingStudent3 = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { email: 'student3@demo.com' }
+    });
+    if (!existingStudent3) {
+        strapi.log.info('Seeding additional users, lessons, and quizzes...');
+        const s2 = await createUser('StudentDemo2', 'student2@demo.com', 'Student');
+        const s3 = await createUser('StudentDemo3', 'student3@demo.com', 'Student');
+        // Create more lessons and quizzes for the first course
+        const course1Res = await strapi.db.query('api::course.course').findMany();
+        if (course1Res.length > 0) {
+            const c1 = course1Res[0];
+            // New lesson
+            const c1l3 = await strapi.entityService.create('api::lesson.lesson', {
+                data: {
+                    title: 'Advanced Module 3: Security',
+                    order: 3,
+                    content: 'Security is paramount. Learn how to secure your applications against XSS, CSRF, and SQL injection.',
+                    course: c1.id,
+                    publishedAt: new Date()
+                }
+            });
+            // New Quiz
+            const quiz2 = await strapi.entityService.create('api::quiz.quiz', {
+                data: {
+                    title: 'Final Security Assessment',
+                    course: c1.id,
+                    publishedAt: new Date()
+                }
+            });
+            const q1 = await strapi.entityService.create('api::question.question', {
+                data: {
+                    text: 'What is XSS?',
+                    options: ['Cross-Site Scripting', 'XML Security Standard', 'Extra Secure Sockets', 'None'],
+                    correctAnswer: 'Cross-Site Scripting',
+                    quiz: quiz2.id,
+                    publishedAt: new Date()
+                }
+            });
+            const q2 = await strapi.entityService.create('api::question.question', {
+                data: {
+                    text: 'Is CSRF dangerous?',
+                    options: ['Yes', 'No', 'Only on Sundays', 'Maybe'],
+                    correctAnswer: 'Yes',
+                    quiz: quiz2.id,
+                    publishedAt: new Date()
+                }
+            });
+            // Student 2 (100% Progress, 100% Quiz)
+            await strapi.entityService.create('api::enrollment.enrollment', {
+                data: { student: s2.id, course: c1.id, publishedAt: new Date() }
+            });
+            const lessons = await strapi.db.query('api::lesson.lesson').findMany({ where: { course: c1.id } });
+            for (const l of lessons) {
+                await strapi.entityService.create('api::lesson-progress.lesson-progress', {
+                    data: { student: s2.id, lesson: l.id, completed: true, publishedAt: new Date() }
+                });
+            }
+            await strapi.entityService.create('api::quiz-result.quiz-result', {
+                data: { student: s2.id, quiz: quiz2.id, score: 100, totalQuestions: 2, publishedAt: new Date() }
+            });
+            // Student 3 (50% Progress, 50% Quiz)
+            await strapi.entityService.create('api::enrollment.enrollment', {
+                data: { student: s3.id, course: c1.id, publishedAt: new Date() }
+            });
+            await strapi.entityService.create('api::lesson-progress.lesson-progress', {
+                data: { student: s3.id, lesson: lessons[0].id, completed: true, publishedAt: new Date() }
+            });
+            await strapi.entityService.create('api::quiz-result.quiz-result', {
+                data: { student: s3.id, quiz: quiz2.id, score: 50, totalQuestions: 2, publishedAt: new Date() }
+            });
+            strapi.log.info('Additional students and course data seeded successfully.');
+        }
+    }
     strapi.log.info('Successfully seeded demo data!');
 }
