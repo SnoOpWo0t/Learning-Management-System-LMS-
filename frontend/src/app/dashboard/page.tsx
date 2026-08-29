@@ -58,7 +58,7 @@ function StudentOverview() {
       });
 
       // Build Recent Activity Feed
-      const feed = [];
+      const feed: any[] = [];
       enrollments.forEach((e: any) => {
         feed.push({
           id: `e-${e.documentId}`,
