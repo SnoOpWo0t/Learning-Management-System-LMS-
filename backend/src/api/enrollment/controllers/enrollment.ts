@@ -12,27 +12,23 @@ export default factories.createCoreController('api::enrollment.enrollment', ({ s
     }
 
     // Force student to be the current user if they are not an Admin/Content Manager
-    let targetStudentDocId = user.documentId;
-    if (!targetStudentDocId) {
-      const userObj = await strapi.db.query('plugin::users-permissions.user').findOne({ where: { id: user.id } });
-      if (!userObj || !userObj.documentId) return ctx.badRequest('Could not resolve user documentId');
-      targetStudentDocId = userObj.documentId;
+    const targetStudentId = user.id;
+
+    // Resolve course to numeric ID
+    let targetCourseId = course;
+    if (typeof course === 'string') {
+      const courseObj = await strapi.db.query('api::course.course').findOne({ where: { documentId: course } });
+      if (!courseObj) return ctx.badRequest('Could not resolve course ID');
+      targetCourseId = courseObj.id;
     }
 
-    let targetCourseDocId = course;
-    if (typeof course === 'number') {
-      const courseObj = await strapi.db.query('api::course.course').findOne({ where: { id: course } });
-      if (!courseObj || !courseObj.documentId) return ctx.badRequest('Could not resolve course documentId');
-      targetCourseDocId = courseObj.documentId;
-    }
-
-    // Check for duplicate enrollment using the relations
+    // Check for duplicate enrollment using numeric IDs on the DB layer
     let existingEnrollments = [];
     try {
-      existingEnrollments = await strapi.documents('api::enrollment.enrollment').findMany({
-        filters: {
-          course: { documentId: targetCourseDocId },
-          student: { documentId: targetStudentDocId }
+      existingEnrollments = await strapi.db.query('api::enrollment.enrollment').findMany({
+        where: {
+          course: targetCourseId,
+          student: targetStudentId
         }
       });
     } catch (e) {
@@ -44,17 +40,17 @@ export default factories.createCoreController('api::enrollment.enrollment', ({ s
     }
 
     try {
-      // Create manually to ensure relation binding works in Strapi 5 using purely documentIds
-      const enrollment = await strapi.documents('api::enrollment.enrollment').create({
+      // Create manually on DB layer with numeric IDs
+      const enrollment = await strapi.db.query('api::enrollment.enrollment').create({
         data: {
-          student: targetStudentDocId,
-          course: targetCourseDocId,
+          student: targetStudentId,
+          course: targetCourseId,
           publishedAt: new Date()
         },
         populate: ['course']
       });
       
-      // Standard response format
+      // Standard response format (wrap in data object)
       ctx.body = { data: enrollment };
       return;
     } catch (createErr) {

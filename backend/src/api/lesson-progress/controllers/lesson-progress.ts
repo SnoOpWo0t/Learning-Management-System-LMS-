@@ -11,37 +11,36 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
       return ctx.badRequest('Lesson is required');
     }
 
-    // Force student to use documentId safely
-    let targetStudentDocId = user.documentId;
-    
-    if (!targetStudentDocId) {
-      const userObj = await strapi.db.query('plugin::users-permissions.user').findOne({ where: { id: user.id } });
-      if (!userObj || !userObj.documentId) return ctx.badRequest('Could not resolve user documentId');
-      targetStudentDocId = userObj.documentId;
-    }
+    const targetStudentId = user.id;
 
     try {
-      // 1. Fetch the lesson to ensure it exists and get its course using documents API
-      // Assume 'lesson' from frontend is a documentId because that's what the frontend uses
-      const lessons = await strapi.documents('api::lesson.lesson').findMany({
-        filters: { documentId: lesson },
-        populate: ['course']
-      });
+      // 1. Fetch the lesson to get numeric ID and its course numeric ID
+      let lessonEntity;
+      if (typeof lesson === 'string') {
+        lessonEntity = await strapi.db.query('api::lesson.lesson').findOne({ 
+          where: { documentId: lesson },
+          populate: ['course'] 
+        });
+      } else {
+        lessonEntity = await strapi.db.query('api::lesson.lesson').findOne({ 
+          where: { id: lesson },
+          populate: ['course'] 
+        });
+      }
       
-      if (!lessons || lessons.length === 0) {
+      if (!lessonEntity) {
         return ctx.badRequest('Invalid lesson');
       }
       
-      const lessonEntity = lessons[0];
       if (!lessonEntity.course) {
         return ctx.badRequest('Lesson has no associated course');
       }
 
-      // 2. Ensure user is enrolled in the course
-      const enrollments = await strapi.documents('api::enrollment.enrollment').findMany({
-        filters: {
-          student: { documentId: targetStudentDocId },
-          course: { documentId: lessonEntity.course.documentId }
+      // 2. Ensure user is enrolled in the course (using numeric IDs)
+      const enrollments = await strapi.db.query('api::enrollment.enrollment').findMany({
+        where: {
+          student: targetStudentId,
+          course: lessonEntity.course.id
         }
       });
 
@@ -49,11 +48,11 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
         return ctx.forbidden('You are not enrolled in this course');
       }
 
-      // 3. Check for duplicate progress
-      const existingProgress = await strapi.documents('api::lesson-progress.lesson-progress').findMany({
-        filters: {
-          student: { documentId: targetStudentDocId },
-          lesson: { documentId: lessonEntity.documentId }
+      // 3. Check for duplicate progress (using numeric IDs)
+      const existingProgress = await strapi.db.query('api::lesson-progress.lesson-progress').findMany({
+        where: {
+          student: targetStudentId,
+          lesson: lessonEntity.id
         }
       });
 
@@ -61,11 +60,11 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
         return ctx.badRequest('You have already completed this lesson');
       }
 
-      // 4. Create manually to bypass any super.create relation payload bugs in v5
-      const progress = await strapi.documents('api::lesson-progress.lesson-progress').create({
+      // 4. Create manually on DB layer
+      const progress = await strapi.db.query('api::lesson-progress.lesson-progress').create({
         data: {
-          student: targetStudentDocId,
-          lesson: lessonEntity.documentId,
+          student: targetStudentId,
+          lesson: lessonEntity.id,
           completed: true,
           publishedAt: new Date()
         }

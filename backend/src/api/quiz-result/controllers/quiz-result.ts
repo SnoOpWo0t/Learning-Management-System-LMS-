@@ -10,28 +10,29 @@ export default factories.createCoreController('api::quiz-result.quiz-result', ({
     if (!quiz) return ctx.badRequest('Quiz ID is required');
     if (!answers || typeof answers !== 'object') return ctx.badRequest('Answers object is required');
 
-    // Normalize user documentId
-    let targetStudentDocId = user.documentId;
-    if (!targetStudentDocId) {
-      const userObj = await strapi.db.query('plugin::users-permissions.user').findOne({ where: { id: user.id } });
-      if (!userObj || !userObj.documentId) return ctx.badRequest('Could not resolve user documentId');
-      targetStudentDocId = userObj.documentId;
-    }
+    const targetStudentId = user.id;
 
     try {
-      // Fetch quiz with its questions using documents API to safely handle documentId
-      const quizzes = await strapi.documents('api::quiz.quiz').findMany({
-        filters: { documentId: quiz },
-        populate: ['questions', 'course']
-      });
+      // Fetch quiz with its questions using DB API to get numeric IDs
+      let quizEntity;
+      if (typeof quiz === 'string') {
+        quizEntity = await strapi.db.query('api::quiz.quiz').findOne({
+          where: { documentId: quiz },
+          populate: ['questions', 'course']
+        });
+      } else {
+        quizEntity = await strapi.db.query('api::quiz.quiz').findOne({
+          where: { id: quiz },
+          populate: ['questions', 'course']
+        });
+      }
 
-      if (!quizzes || quizzes.length === 0) return ctx.notFound('Quiz not found');
-      const quizEntity = quizzes[0];
+      if (!quizEntity) return ctx.notFound('Quiz not found');
 
-      // Make sure user is enrolled in the course this quiz belongs to
+      // Make sure user is enrolled in the course this quiz belongs to (using numeric IDs)
       if (quizEntity.course) {
-        const enrollments = await strapi.documents('api::enrollment.enrollment').findMany({
-          filters: { student: { documentId: targetStudentDocId }, course: { documentId: quizEntity.course.documentId } }
+        const enrollments = await strapi.db.query('api::enrollment.enrollment').findMany({
+          where: { student: targetStudentId, course: quizEntity.course.id }
         });
         if (!enrollments || enrollments.length === 0) {
           return ctx.forbidden('You are not enrolled in this course');
@@ -54,10 +55,10 @@ export default factories.createCoreController('api::quiz-result.quiz-result', ({
       const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
 
       // Check if a result already exists to prevent duplicate entries if desired, but we'll just create a new one
-      const result = await strapi.documents('api::quiz-result.quiz-result').create({
+      const result = await strapi.db.query('api::quiz-result.quiz-result').create({
         data: {
-          student: targetStudentDocId,
-          quiz: quizEntity.documentId,
+          student: targetStudentId,
+          quiz: quizEntity.id,
           score: score,
           totalQuestions: totalQuestions,
           publishedAt: new Date()
