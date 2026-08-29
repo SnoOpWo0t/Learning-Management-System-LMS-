@@ -72,9 +72,9 @@ export default factories.createCoreController('api::lesson-progress.lesson-progr
 
       ctx.body = { data: progress };
       return;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error marking lesson complete:', err);
-      return ctx.badRequest('Failed to mark lesson complete: ' + err.message);
+      return ctx.badRequest('Failed to mark lesson complete: ' + (err?.message || 'Unknown error'));
     }
   },
 

@@ -10,36 +10,64 @@ exports.default = strapi_1.factories.createCoreController('api::lesson-progress.
         if (!lesson) {
             return ctx.badRequest('Lesson is required');
         }
-        // Force student to be the current user
-        const targetStudent = user.id;
-        // Fetch the lesson to find the course
-        const lessonEntity = await strapi.entityService.findOne('api::lesson.lesson', lesson, { populate: ['course'] });
-        if (!lessonEntity || !lessonEntity.course) {
-            return ctx.badRequest('Invalid lesson');
-        }
-        // Ensure user is enrolled in the course
-        const enrollments = await strapi.entityService.findMany('api::enrollment.enrollment', {
-            filters: {
-                student: targetStudent,
-                course: lessonEntity.course.id
+        const targetStudentId = user.id;
+        try {
+            // 1. Fetch the lesson to get numeric ID and its course numeric ID
+            let lessonEntity;
+            if (typeof lesson === 'string') {
+                lessonEntity = await strapi.db.query('api::lesson.lesson').findOne({
+                    where: { documentId: lesson },
+                    populate: ['course']
+                });
             }
-        });
-        if (!enrollments || enrollments.length === 0) {
-            return ctx.forbidden('You are not enrolled in this course');
-        }
-        // Check for duplicate progress
-        const existingProgress = await strapi.entityService.findMany('api::lesson-progress.lesson-progress', {
-            filters: {
-                student: targetStudent,
-                lesson: lesson
+            else {
+                lessonEntity = await strapi.db.query('api::lesson.lesson').findOne({
+                    where: { id: lesson },
+                    populate: ['course']
+                });
             }
-        });
-        if (existingProgress && existingProgress.length > 0) {
-            return ctx.badRequest('You have already completed this lesson');
+            if (!lessonEntity) {
+                return ctx.badRequest('Invalid lesson');
+            }
+            if (!lessonEntity.course) {
+                return ctx.badRequest('Lesson has no associated course');
+            }
+            // 2. Ensure user is enrolled in the course (using numeric IDs)
+            const enrollments = await strapi.db.query('api::enrollment.enrollment').findMany({
+                where: {
+                    student: targetStudentId,
+                    course: lessonEntity.course.id
+                }
+            });
+            if (!enrollments || enrollments.length === 0) {
+                return ctx.forbidden('You are not enrolled in this course');
+            }
+            // 3. Check for duplicate progress (using numeric IDs)
+            const existingProgress = await strapi.db.query('api::lesson-progress.lesson-progress').findMany({
+                where: {
+                    student: targetStudentId,
+                    lesson: lessonEntity.id
+                }
+            });
+            if (existingProgress && existingProgress.length > 0) {
+                return ctx.badRequest('You have already completed this lesson');
+            }
+            // 4. Create manually on DB layer
+            const progress = await strapi.db.query('api::lesson-progress.lesson-progress').create({
+                data: {
+                    student: targetStudentId,
+                    lesson: lessonEntity.id,
+                    completed: true,
+                    publishedAt: new Date()
+                }
+            });
+            ctx.body = { data: progress };
+            return;
         }
-        ctx.request.body.data.student = targetStudent;
-        ctx.request.body.data.completed = true;
-        return super.create(ctx);
+        catch (err) {
+            console.error('Error marking lesson complete:', err);
+            return ctx.badRequest('Failed to mark lesson complete: ' + ((err === null || err === void 0 ? void 0 : err.message) || 'Unknown error'));
+        }
     },
     async find(ctx) {
         var _a;

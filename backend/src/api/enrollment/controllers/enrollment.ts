@@ -53,9 +53,9 @@ export default factories.createCoreController('api::enrollment.enrollment', ({ s
       // Standard response format (wrap in data object)
       ctx.body = { data: enrollment };
       return;
-    } catch (createErr) {
+    } catch (createErr: any) {
       console.error('Error creating enrollment:', createErr);
-      return ctx.badRequest('Enrollment creation failed: ' + createErr.message);
+      return ctx.badRequest('Enrollment creation failed: ' + (createErr?.message || 'Unknown error'));
     }
   },
 

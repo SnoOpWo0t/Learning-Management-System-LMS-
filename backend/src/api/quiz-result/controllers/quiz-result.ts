@@ -75,9 +75,9 @@ export default factories.createCoreController('api::quiz-result.quiz-result', ({
         }
       };
       
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting quiz:', err);
-      return ctx.badRequest('Failed to submit quiz: ' + err.message);
+      return ctx.badRequest('Failed to submit quiz: ' + (err?.message || 'Unknown error'));
     }
   },
   
