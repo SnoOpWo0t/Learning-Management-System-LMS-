@@ -92,6 +92,99 @@ export default {
     } catch (err) {
       strapi.log.error('Failed to inject placeholder videos:', err);
     }
+
+    // Auto-generate quizzes for any course that doesn't have one
+    try {
+      const allCourses = await strapi.db.query('api::course.course').findMany({});
+      for (const course of allCourses) {
+        const existingQuizzes = await strapi.db.query('api::quiz.quiz').findMany({
+          where: { course: course.id }
+        });
+        
+        if (existingQuizzes.length === 0) {
+          strapi.log.info(`Creating quiz for course: ${course.title}`);
+          const quiz = await strapi.entityService.create('api::quiz.quiz', {
+            data: {
+              title: `${course.title} - Final Assessment`,
+              course: course.id,
+              publishedAt: new Date()
+            } as any
+          });
+
+          // Add 3 questions per quiz
+          const questions = [
+            {
+              text: `What is the main focus of "${course.title}"?`,
+              options: ['Understanding core concepts', 'Memorizing syntax', 'Copying code from tutorials', 'Skipping fundamentals'],
+              correctAnswer: 'Understanding core concepts'
+            },
+            {
+              text: 'Which approach leads to the best learning outcomes?',
+              options: ['Passive video watching', 'Active practice and building projects', 'Only reading documentation', 'Avoiding challenges'],
+              correctAnswer: 'Active practice and building projects'
+            },
+            {
+              text: 'What should you do after completing this course?',
+              options: ['Build a real project using these skills', 'Forget everything', 'Never code again', 'Only study theory'],
+              correctAnswer: 'Build a real project using these skills'
+            }
+          ];
+
+          for (const q of questions) {
+            await strapi.entityService.create('api::question.question', {
+              data: {
+                text: q.text,
+                options: q.options,
+                correctAnswer: q.correctAnswer,
+                quiz: quiz.id,
+                publishedAt: new Date()
+              } as any
+            });
+          }
+        }
+      }
+      strapi.log.info('Quiz auto-generation complete.');
+    } catch (err) {
+      strapi.log.error('Failed to auto-generate quizzes:', err);
+    }
+
+    // Auto-generate lessons for courses with fewer than 3 lessons
+    try {
+      const allCourses2 = await strapi.db.query('api::course.course').findMany({});
+      for (const course of allCourses2) {
+        const lessons = await strapi.db.query('api::lesson.lesson').findMany({
+          where: { course: course.id }
+        });
+        
+        if (lessons.length < 3) {
+          const lessonsToAdd = 3 - lessons.length;
+          strapi.log.info(`Adding ${lessonsToAdd} lessons to course: ${course.title}`);
+          
+          const lessonTemplates = [
+            { title: `Advanced Module for ${course.title}`, content: `This is an advanced module created for the presentation. It covers deeper topics related to ${course.title}, including best practices, common pitfalls, and real-world case studies.` },
+            { title: `Final Capstone Details for ${course.title}`, content: `Details for your final capstone. Apply everything you have learned in ${course.title} to build a comprehensive project that demonstrates your mastery of the subject matter.` },
+            { title: `Practical Workshop for ${course.title}`, content: `Hands-on workshop session where you will implement the concepts learned throughout ${course.title}. Follow along with guided exercises and build something real.` },
+          ];
+
+          for (let i = 0; i < lessonsToAdd; i++) {
+            const template = lessonTemplates[i % lessonTemplates.length];
+            await strapi.entityService.create('api::lesson.lesson', {
+              data: {
+                title: template.title,
+                order: lessons.length + i + 1,
+                content: template.content,
+                videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                course: course.id,
+                publishedAt: new Date()
+              } as any
+            });
+          }
+        }
+      }
+      strapi.log.info('Lesson auto-generation complete.');
+    } catch (err) {
+      strapi.log.error('Failed to auto-generate lessons:', err);
+    }
   },
 };
 
