@@ -28,6 +28,9 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database 
       ssl: useSsl ? { rejectUnauthorized: false } : false,
       schema: env('DATABASE_SCHEMA', 'public'),
     };
+    console.log('[DB-DEBUG] Using DATABASE_URL connection string.');
+    console.log('[DB-DEBUG] Host from URL:', new URL(databaseUrl).hostname);
+    console.log('[DB-DEBUG] SSL Enabled:', useSsl);
   } else {
     postgresConnection.host = env('DATABASE_HOST', env('PGHOST', 'localhost'));
     postgresConnection.port = env.int('DATABASE_PORT', env.int('PGPORT', 5432));
@@ -35,6 +38,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database 
     postgresConnection.user = env('DATABASE_USERNAME', env('PGUSER', 'strapi'));
     postgresConnection.password = env('DATABASE_PASSWORD', env('PGPASSWORD', 'strapi'));
     postgresConnection.ssl = env.bool('DATABASE_SSL', false) ? { rejectUnauthorized: false } : false;
+    console.log('[DB-DEBUG] Using explicit DATABASE_HOST config. Host:', postgresConnection.host);
   }
 
   const connections: Record<Core.Config.Database.ClientKind, Core.Config.Database['connection']> = {
