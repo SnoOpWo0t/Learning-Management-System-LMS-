@@ -19,6 +19,7 @@ function StudentOverview() {
   });
   
   const [activities, setActivities] = useState<any[]>([]);
+  const [latestEnrollment, setLatestEnrollment] = useState<any>(null);
   const [showAllActivity, setShowAllActivity] = useState(false);
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -89,6 +90,22 @@ function StudentOverview() {
       // Sort by date descending
       feed.sort((a, b) => b.date.getTime() - a.date.getTime());
       setActivities(feed);
+
+      if (enrollments.length > 0) {
+        // Find latest enrollment for "Continue Learning"
+        const sorted = [...enrollments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+        // Try to calculate progress for this specific course
+        const latestCourse = sorted[0].course;
+        if (latestCourse) {
+          const courseProgresses = progresses.filter((p: any) => p.lesson?.course?.documentId === latestCourse.documentId || p.lesson?.course === latestCourse.id);
+          // Just a rough estimate if we don't have total lessons
+          setLatestEnrollment({
+             ...sorted[0],
+             progressCount: courseProgresses.length
+          });
+        }
+      }
 
     } catch (err) {
       console.error('Failed to fetch dashboard data', err);
@@ -177,35 +194,52 @@ function StudentOverview() {
             <Link href="/dashboard/my-courses" className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline">View all</Link>
           </div>
           
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center group hover-lift transition-colors overflow-hidden">
-            <div className="w-full md:w-64 aspect-video bg-gray-100 dark:bg-slate-800 rounded-2xl overflow-hidden shrink-0 relative">
-               <img src="https://picsum.photos/seed/advanced-react/400/300" alt="Course" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-               <div className="absolute inset-0 bg-black/10"></div>
-            </div>
-            
-            <div className="flex-1 min-w-0 w-full">
-              <div className="inline-flex items-center px-2.5 py-1 mb-3 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold tracking-wide uppercase">
-                Web Development
+          {loadingStats ? (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse h-48"></div>
+          ) : latestEnrollment && latestEnrollment.course ? (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center group hover-lift transition-colors overflow-hidden">
+              <div className="w-full md:w-64 aspect-video bg-gray-100 dark:bg-slate-800 rounded-2xl overflow-hidden shrink-0 relative">
+                 <img src={`https://picsum.photos/seed/${latestEnrollment.course.documentId}/400/300`} alt="Course" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                 <div className="absolute inset-0 bg-black/10"></div>
               </div>
-              <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2 truncate">Advanced State Management in React</h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 line-clamp-2 leading-relaxed">
-                Master Redux, Zustand, and React Context to build scalable applications with predictable state updates.
-              </p>
               
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 w-[65%] rounded-full"></div>
+              <div className="flex-1 min-w-0 w-full">
+                <div className="inline-flex items-center px-2.5 py-1 mb-3 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold tracking-wide uppercase">
+                  {latestEnrollment.course.difficulty || 'Course'}
                 </div>
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">65%</span>
+                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2 truncate">{latestEnrollment.course.title}</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 line-clamp-2 leading-relaxed">
+                  {latestEnrollment.course.description || 'Continue your learning journey where you left off.'}
+                </p>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min((latestEnrollment.progressCount * 20), 100)}%` }}></div>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {Math.min((latestEnrollment.progressCount * 20), 100)}%
+                  </span>
+                </div>
+              </div>
+              
+              <div className="w-full md:w-auto mt-4 md:mt-0 shrink-0">
+                <Link href={`/dashboard/courses/${latestEnrollment.course.documentId}/learn`} className="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-gray-900 dark:text-white font-medium rounded-xl transition-colors">
+                  Resume
+                </Link>
               </div>
             </div>
-            
-            <div className="w-full md:w-auto mt-4 md:mt-0 shrink-0">
-              <Link href="/dashboard/my-courses" className="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-gray-900 dark:text-white font-medium rounded-xl transition-colors">
-                Resume
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 border border-gray-100 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 bg-blue-50 dark:bg-slate-800 text-blue-500 rounded-full flex items-center justify-center mb-4">
+                {Icons.Book}
+              </div>
+              <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Active Courses</h4>
+              <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md">You haven't enrolled in any courses yet. Browse our catalog to start learning.</p>
+              <Link href="/dashboard/courses" className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors">
+                Browse Catalog
               </Link>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Recent Activity */}
