@@ -17,13 +17,32 @@ const config = ({ env }) => {
     const databaseUrl = env('DATABASE_URL');
     let postgresConnection = {};
     if (databaseUrl) {
-        // Railway handles SSL internally, but if forced, use rejectUnauthorized: false
-        const useSsl = env.bool('DATABASE_SSL', false) || databaseUrl.includes('sslmode=require');
-        postgresConnection = {
-            connectionString: databaseUrl,
-            ssl: useSsl ? { rejectUnauthorized: false } : false,
-            schema: env('DATABASE_SCHEMA', 'public'),
-        };
+        // Auto-detect Railway public proxy and force SSL
+        const isPublicProxy = databaseUrl.includes('proxy.rlwy.net') || databaseUrl.includes('.proxy.');
+        const useSsl = isPublicProxy || env.bool('DATABASE_SSL', false) || databaseUrl.includes('sslmode=require');
+        // Parse the URL to get individual fields - more reliable than connectionString with pg
+        try {
+            const url = new URL(databaseUrl);
+            postgresConnection = {
+                host: url.hostname,
+                port: url.port ? parseInt(url.port, 10) : 5432,
+                database: url.pathname.replace(/^\//, ''),
+                user: decodeURIComponent(url.username),
+                password: decodeURIComponent(url.password),
+                ssl: useSsl ? { rejectUnauthorized: false } : false,
+                schema: env('DATABASE_SCHEMA', 'public'),
+            };
+            console.log('[DB] Connecting to:', url.hostname, 'port:', url.port, 'ssl:', useSsl);
+        }
+        catch {
+            // Fallback to connectionString if URL parsing fails
+            postgresConnection = {
+                connectionString: databaseUrl,
+                ssl: useSsl ? { rejectUnauthorized: false } : false,
+                schema: env('DATABASE_SCHEMA', 'public'),
+            };
+            console.log('[DB] Using raw connectionString, ssl:', useSsl);
+        }
     }
     else {
         postgresConnection.host = env('DATABASE_HOST', env('PGHOST', 'localhost'));
@@ -32,6 +51,7 @@ const config = ({ env }) => {
         postgresConnection.user = env('DATABASE_USERNAME', env('PGUSER', 'strapi'));
         postgresConnection.password = env('DATABASE_PASSWORD', env('PGPASSWORD', 'strapi'));
         postgresConnection.ssl = env.bool('DATABASE_SSL', false) ? { rejectUnauthorized: false } : false;
+        console.log('[DB] Using individual env vars. Host:', postgresConnection.host);
     }
     const connections = {
         mysql: {

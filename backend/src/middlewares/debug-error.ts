@@ -1,5 +1,6 @@
 export default () => {
   return async (ctx: any, next: () => Promise<void>) => {
+    ctx.set('X-Debug-Middleware', 'active');
     try {
       await next();
     } catch (err: any) {

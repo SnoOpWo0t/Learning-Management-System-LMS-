@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const config = [
     'strapi::logger',
     'strapi::errors',
+    'global::debug-error',
     'strapi::security',
     'strapi::cors',
     'strapi::poweredBy',

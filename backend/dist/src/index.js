@@ -8,7 +8,8 @@ const dns_1 = __importDefault(require("dns"));
 dns_1.default.setDefaultResultOrder('ipv4first');
 exports.default = {
     register({ strapi }) {
-        // Custom fields are now added via src/extensions/users-permissions/content-types/user/schema.json
+        // Trust reverse proxy (Railway/Heroku/etc.) so secure cookies work over HTTPS
+        strapi.server.app.proxy = true;
     },
     async bootstrap({ strapi }) {
         // Bootstrap Roles

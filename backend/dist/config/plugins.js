@@ -24,9 +24,17 @@ const deniedTypes = [
 const config = ({ env }) => ({
     'users-permissions': {
         config: {
+            jwtSecret: env('JWT_SECRET', 'jwttokentobemodified'),
+            jwt: {
+                expiresIn: '30d',
+            },
             jwtManagement: 'refresh',
             sessions: {
                 httpOnly: true,
+                cookie: {
+                    secure: false,
+                    sameSite: 'lax',
+                }
             },
         },
     },
