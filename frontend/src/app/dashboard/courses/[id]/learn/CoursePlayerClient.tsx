@@ -176,9 +176,9 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
         triggerConfetti();
       }
       
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to mark complete', err);
-      alert('Failed to mark lesson as complete.');
+      alert(err.message || 'Failed to mark lesson as complete.');
     } finally {
       setMarkingComplete(false);
     }
