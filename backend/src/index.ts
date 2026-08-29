@@ -205,6 +205,10 @@ async function grantPublicPermissions(strapi: Core.Strapi) {
     'api::blog-post.blog-post.findOne',
     'api::course-rating.course-rating.find',
     'api::course-rating.course-rating.findOne',
+    'api::quiz.quiz.find',
+    'api::quiz.quiz.findOne',
+    'api::question.question.find',
+    'api::question.question.findOne',
   ];
 
   for (const action of permissionsToGrant) {

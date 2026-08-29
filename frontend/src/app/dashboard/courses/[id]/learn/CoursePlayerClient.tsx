@@ -13,6 +13,7 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
   const [loading, setLoading] = useState(true);
   const [enrollment, setEnrollment] = useState<any>(null);
   
+  const [activeQuiz, setActiveQuiz] = useState<any>(quiz);
   const [activeTab, setActiveTab] = useState<string>(lessons.length > 0 ? 'lesson-0' : 'quiz');
   const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>({});
   
@@ -73,8 +74,24 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
       }
       setCompletedLessons(completed);
 
-      if (quiz) {
-        const qRes = await fetchAPI(`/quiz-results?filters[student][id][$eq]=${user?.id}&filters[quiz][documentId][$eq]=${quiz.documentId}`, {
+      // Fetch Quiz if not present from SSR
+      let currentQ = activeQuiz || quiz;
+      if (!currentQ) {
+        try {
+          const qFetch = await fetchAPI(`/quizzes?filters[course][documentId][$eq]=${courseId}&populate=questions`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (qFetch.data && qFetch.data.length > 0) {
+            currentQ = qFetch.data[0];
+            setActiveQuiz(currentQ);
+          }
+        } catch (e) {
+          console.error('Quiz client fetch error:', e);
+        }
+      }
+
+      if (currentQ) {
+        const qRes = await fetchAPI(`/quiz-results?filters[student][id][$eq]=${user?.id}&filters[quiz][documentId][$eq]=${currentQ.documentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (qRes.data && qRes.data.length > 0) {
@@ -172,7 +189,7 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
       setCompletedLessons(prev => ({ ...prev, [lessonDocId]: true }));
       
       const currentIndex = lessons.findIndex(l => l.documentId === lessonDocId);
-      if (currentIndex === lessons.length - 1 && !quiz) {
+      if (currentIndex === lessons.length - 1 && !activeQuiz) {
         triggerConfetti();
       }
       
@@ -189,7 +206,7 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
     if (direction === 'next') {
       if (currentIndex < lessons.length - 1) {
         setActiveTab(`lesson-${currentIndex + 1}`);
-      } else if (quiz) {
+      } else if (activeQuiz) {
         setActiveTab('quiz');
       }
     } else {
@@ -202,14 +219,14 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
   };
 
   const handleQuizSubmit = async () => {
-    if (!token || !quiz) return;
-    if (Object.keys(answers).length < (quiz.questions?.length || 0)) {
+    if (!token || !activeQuiz) return;
+    if (Object.keys(answers).length < (activeQuiz.questions?.length || 0)) {
       alert("Please answer all questions before submitting.");
       return;
     }
     try {
       setSubmittingQuiz(true);
-      const res = await fetchAPI(`/quizzes/${quiz.documentId}/submit`, {
+      const res = await fetchAPI(`/quizzes/${activeQuiz.documentId}/submit`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify({ answers })
@@ -335,7 +352,7 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
               );
             })}
             
-            {quiz && (
+            {activeQuiz && (
               <div className="pt-4 mt-4 border-t border-gray-200 dark:border-slate-800 px-3 pb-8">
                 <button 
                   onClick={() => setActiveTab('quiz')}
@@ -450,14 +467,14 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
                 )}
               </div>
             </div>
-          ) : activeTab === 'quiz' && quiz ? (
+          ) : activeTab === 'quiz' && activeQuiz ? (
             <div className="p-6 md:p-12 max-w-3xl mx-auto w-full pb-20">
               <div className="text-center mb-10">
                 <div className="inline-block p-4 bg-purple-100 dark:bg-purple-900/30 rounded-3xl text-purple-600 dark:text-purple-400 mb-4 shadow-inner ring-1 ring-purple-200 dark:ring-purple-800">
                   <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                 </div>
-                <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2">{quiz.title}</h1>
-                {quiz.description && <p className="text-gray-500 dark:text-gray-400">{quiz.description}</p>}
+                <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2">{activeQuiz.title}</h1>
+                {activeQuiz.description && <p className="text-gray-500 dark:text-gray-400">{activeQuiz.description}</p>}
               </div>
 
               {quizResult ? (
@@ -474,7 +491,7 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {quiz.questions?.map((q: any, index: number) => (
+                  {activeQuiz.questions?.map((q: any, index: number) => (
                     <div key={q.id || index} className="bg-white dark:bg-slate-900 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-slate-800 animate-slide-up opacity-0" style={{ animationDelay: `${index * 100}ms` }} >
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-sm mr-3">{index + 1}</span> 
@@ -554,7 +571,7 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
 
             <button 
               onClick={() => navigateTo('next')}
-              disabled={activeLessonIndex === lessons.length - 1 && !quiz}
+              disabled={activeLessonIndex === lessons.length - 1 && !activeQuiz}
               className="flex items-center gap-2 px-4 py-2 text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               Next
