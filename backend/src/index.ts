@@ -68,6 +68,30 @@ export default {
     } catch (err) {
       strapi.log.error('Error seeding demo data:', err);
     }
+
+    // Populate all empty lessons with a Rickroll video
+    try {
+      const lessonsWithoutVideo = await strapi.db.query('api::lesson.lesson').findMany({
+        where: {
+          $or: [
+            { videoUrl: { $null: true } },
+            { videoUrl: '' }
+          ]
+        }
+      });
+      
+      if (lessonsWithoutVideo && lessonsWithoutVideo.length > 0) {
+        strapi.log.info(`Updating ${lessonsWithoutVideo.length} empty lessons with placeholder video...`);
+        for (const lesson of lessonsWithoutVideo) {
+          await strapi.db.query('api::lesson.lesson').update({
+            where: { id: lesson.id },
+            data: { videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }
+          });
+        }
+      }
+    } catch (err) {
+      strapi.log.error('Failed to inject placeholder videos:', err);
+    }
   },
 };
 
