@@ -1,4 +1,4 @@
-// Custom entry point - forces IPv4 DNS and logs full AggregateError details
+// Custom entry point - forces IPv4 DNS and logs full error details
 'use strict';
 
 const dns = require('dns');
@@ -8,6 +8,8 @@ console.log('[BOOT] DNS set to ipv4first');
 console.log('[BOOT] DATABASE_URL exists:', !!process.env.DATABASE_URL);
 console.log('[BOOT] DATABASE_CLIENT:', process.env.DATABASE_CLIENT);
 console.log('[BOOT] DATABASE_SSL:', process.env.DATABASE_SSL);
+console.log('[BOOT] JWT_SECRET exists:', !!process.env.JWT_SECRET);
+console.log('[BOOT] ENCRYPTION_KEY exists:', !!process.env.ENCRYPTION_KEY);
 
 if (process.env.DATABASE_URL) {
   try {
@@ -20,17 +22,34 @@ if (process.env.DATABASE_URL) {
   }
 }
 
-// Intercept unhandled rejections to log full AggregateError details
+// Intercept ALL uncaught errors and rejections
 process.on('unhandledRejection', (reason) => {
+  console.error('[CRASH] Unhandled rejection:', reason);
+  if (reason && reason.stack) console.error(reason.stack);
   if (reason && reason.errors) {
-    console.error('[CRASH] AggregateError with', reason.errors.length, 'sub-errors:');
     reason.errors.forEach((err, i) => {
-      console.error(`  [${i}] message="${err.message}" code=${err.code} syscall=${err.syscall} address=${err.address} port=${err.port}`);
+      console.error(`  [${i}] message="${err.message}" code=${err.code} address=${err.address} port=${err.port}`);
     });
-  } else {
-    console.error('[CRASH] Unhandled rejection:', reason);
   }
 });
+
+process.on('uncaughtException', (err) => {
+  console.error('[CRASH] Uncaught exception:', err.message);
+  console.error(err.stack);
+});
+
+// Monkey-patch console.error to capture Strapi's internal error logging
+const origError = console.error;
+console.error = function(...args) {
+  // If Strapi logs an error object, make sure we see the full stack
+  args.forEach(arg => {
+    if (arg instanceof Error && arg.stack && !String(args[0]).includes('[CRASH]')) {
+      origError.call(console, '[ERROR-DETAIL]', arg.message);
+      origError.call(console, '[ERROR-STACK]', arg.stack);
+    }
+  });
+  origError.apply(console, args);
+};
 
 // Ensure 'start' command is in argv for Strapi CLI
 if (!process.argv.includes('start')) {
