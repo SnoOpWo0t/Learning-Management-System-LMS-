@@ -48,6 +48,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </>
                   )}
 
+                  {/* Public Blog link for all logged-in users */}
+                  <Link href="/blog" className={getLinkClass('/blog')}>
+                    Blog
+                  </Link>
+
                   {/* Instructor / Content Manager Links */}
                   {(user?.roleType === 'Instructor' || user?.roleType === 'Content Manager' || user?.roleType === 'Admin') && (
                     <Link href="/dashboard/manage-courses" className={getLinkClass('/dashboard/manage-courses')}>Manage Courses</Link>
