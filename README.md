@@ -1,99 +1,163 @@
-# Next-Gen Learning Management System (LMS)
+# LMS-Project: A Next-Generation Learning Management System
 
-A production-ready full-stack Learning Management System tailored for modern educators and students. Built meticulously to satisfy rigorous technical requirements, this platform utilizes a decoupled architecture featuring **Next.js** for the frontend and **Strapi** for the robust headless backend.
+A comprehensive, production-ready learning platform built for scale. Features a robust four-role architecture: course and lesson management, student enrollment with progress tracking, an auto-graded MCQ quiz engine, rich per-role analytics dashboards, an integrated blog system with draft/publish workflows, and a powerful administrative backend.
 
-## 🌟 Key Features
+| Layer | Technology | Hosting |
+|---|---|---|
+| Frontend | Next.js 15 (App Router) | Vercel |
+| Backend / CMS | Strapi 5 (TypeScript) | Railway |
+| Database | SQLite locally, PostgreSQL in production | Railway |
 
-### 1. Robust Role-Based Access Control (RBAC)
-- **Admin**: Complete overview and management via the secure admin dashboard.
-- **Content Manager**: Capable of producing and managing all platform content (Courses, Lessons, Blogs).
-- **Instructor**: Strictly enforced ownership model. Instructors can securely create and manage **only** their own courses, lessons, and quizzes.
-- **Student**: Can browse courses, enroll natively, track persistent lesson progress, and take auto-graded quizzes.
+```
+LMS-project/
+  backend/     Strapi 5 - API, data model, RBAC, business logic
+  frontend/    Next.js 15 - Public site, auth, role-aware dashboards
+```
 
-### 2. Auto-Grading Quiz Engine
-- Instructors can build comprehensive MCQ quizzes bound to specific courses.
-- Server-side auto-grading ensures that sensitive data (correct answers) is **never** leaked to the frontend client.
-- Persistent storage of quiz results allows students to verify their performance.
+**Live Deployments:**
 
-### 3. Integrated Blog System
-- Complete publishing workflow including `Draft` and `Published` states.
-- Publicly accessible blog feed that automatically filters out drafts.
-
-### 4. Rich Aesthetics & Custom UI
-- A gorgeous, responsive user interface built **entirely with Vanilla CSS** (`globals.css`), fulfilling constraints against using utility-first frameworks like Tailwind CSS.
-- Features modern design principles: glassmorphism, dynamic micro-animations, and perfect typography spacing.
-
-## 🚀 Technology Stack
-
-### Frontend
-- **Framework**: Next.js (App Router)
-- **Language**: TypeScript & React 19
-- **Styling**: Vanilla CSS (CSS Modules & Globals)
-- **Deployment**: Vercel-ready
-
-### Backend
-- **CMS/Framework**: Strapi v5
-- **Database**: SQLite (Local Dev) / PostgreSQL (Production)
-- **Deployment**: Railway-ready
+| | |
+|---|---|
+| Frontend | [https://learning-management-system-lms-git-main-snoopwo0ts-projects.vercel.app](https://learning-management-system-lms-git-main-snoopwo0ts-projects.vercel.app) |
+| Strapi CMS | [https://lms-project-production-19cf.up.railway.app/admin](https://lms-project-production-19cf.up.railway.app/admin) |
 
 ---
 
 ## 🔑 Demo Accounts
 
-The backend is pre-configured to automatically seed the database on the first run. You can use the following demo accounts to test all platform features natively.
+The backend includes a bootstrap script that automatically seeds the database on first run. You can use the following demo accounts to test all platform features natively. The password is the same for all accounts: `Password123!`.
 
-| Role | Email | Password | Dashboard Access |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin@demo.com` | `Password123!` | Complete overview, Blog Management, User Management |
-| **Content Manager** | `content@demo.com` | `Password123!` | Blog Creation & Publishing |
-| **Instructor** | `instructor@demo.com` | `Password123!` | Course Creation, Lesson Management, Quiz Building |
-| **Student** | `student@demo.com` | `Password123!` | Course Browsing, Enrollment, Lesson Progress, Quiz Taking |
-| **Student 2** | `student2@demo.com` | `Password123!` | Shows 100% completion in Course 1 with perfect auto-graded quiz score |
-| **Student 3** | `student3@demo.com` | `Password123!` | Shows 50% progression in Course 1 with partial auto-graded quiz score |
+Sign in at the live site's `/login` route.
+
+| Role | Email | Password | Dashboard Experience |
+|---|---|---|---|
+| **Admin** | `admin@demo.com` | `Password123!` | Complete system overview, platform analytics, and user management. |
+| **Content Manager** | `content@demo.com` | `Password123!` | Blog writing analytics, draft/publish workflow, and engagement stats. |
+| **Instructor** | `instructor@demo.com` | `Password123!` | Instructor cohort analytics, course performance, and quiz grading insights. |
+| **Student** | `student@demo.com` | `Password123!` | Course browsing, native enrollment, lesson tracking, and quiz taking. |
+| **Student (100%)** | `student2@demo.com` | `Password123!` | Enrolled in advanced courses with perfect 100% quiz scores and progress. |
+| **Student (50%)** | `student3@demo.com` | `Password123!` | Part-way through a course with a 50% quiz score. |
+
+### What each account is for
+
+- **Admin (`admin@demo.com`)**: 
+  The highest authority. View platform-wide statistics, manage users, and moderate the entire blog and course catalog.
+- **Content Manager (`content@demo.com`)**: 
+  Owns the blog and can manage all platform content. Experience the bespoke Writing Dashboard tracking publishing velocity.
+- **Instructor (`instructor@demo.com`)**: 
+  Strictly enforced ownership model. Instructors can securely create and manage **only** their own courses, lessons, and quizzes. Attempting to view another instructor's course returns a 404 natively.
+- **Students (`student*@demo.com`)**: 
+  The core learning experience. Access the dynamic "Continue Learning" feeds, track visual progress rings, and take auto-graded quizzes where sensitive answers are never exposed to the client.
+
 ---
 
-## 💻 Local Development Setup
+## 🚀 Running Locally
 
 ### 1. Backend (Strapi)
+
+Requires Node.js 18+ and npm.
+
 ```bash
 cd backend
 npm install
 npm run dev
 ```
-- Open `http://localhost:1337/admin`.
-- Register the initial admin user. The system will automatically run our custom bootstrap script to define the `Admin`, `Content Manager`, `Instructor`, and `Student` roles.
-- Grant basic CRUD permissions (find, findOne, create, update, delete) to these roles under **Settings > Roles**. Custom backend controllers securely enforce ownership and logic automatically.
+
+Strapi boots up on **http://localhost:1337**. 
+The database is SQLite (`backend/.tmp/data.db`), created and seeded automatically. Delete that file to start from scratch. Open `/admin` to register the initial SuperAdmin account for CMS access.
 
 ### 2. Frontend (Next.js)
-Open a new terminal:
+
+The backend must be running first, as Next.js Server Components call it during render.
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-- Open `http://localhost:3000`.
-- The application will automatically route you to the correct dashboard based on your authenticated role!
+
+The frontend boots up on **http://localhost:3000**. 
+Log in with any of the demo accounts above, and the platform will automatically route you to your role-specific dashboard.
 
 ---
 
-## ☁️ Deployment Guide
+## 🔒 Architecture & Security
 
-### Vercel (Frontend)
-1. Import your GitHub repository to Vercel.
-2. Under "Framework Preset", select **Next.js**.
-3. Set the "Root Directory" to `frontend`.
-4. Add the Environment Variable:
-   - `NEXT_PUBLIC_API_URL` = `https://your-railway-app-url.up.railway.app`
+### How Authentication Works
 
-### Railway (Backend)
-1. Create a new project on Railway and provision a **PostgreSQL** database.
-2. Link your GitHub repository and select the `backend` folder as the root.
-3. Railway will automatically detect the `railway.toml` configuration provided in the repository.
-4. Set the following Environment Variables in Railway:
-   - `DATABASE_CLIENT` = `postgres`
-   - `DATABASE_SSL` = `true`
-   - *Note: Railway automatically injects the `DATABASE_URL`.*
+The browser **never** holds the Strapi JWT natively in JavaScript variables, protecting against XSS attacks.
+
+1. The login form posts to `/api/auth/login`, a Next.js API route handler.
+2. That handler securely exchanges credentials with Strapi and writes the returned JWT into a hardened **httpOnly** cookie.
+3. Next.js Server Components securely read this cookie and communicate directly with Strapi's API on behalf of the user. 
+4. Client components utilize a secure Context Provider that only exposes safe user metadata (ID, role, name), never the token.
+
+### Route Protection
+
+Three layers of defense, deliberately engineered:
+
+| Layer | Implementation | What it decides |
+|---|---|---|
+| **Middleware** | `middleware.ts` | Edge-level checks: Does a session cookie exist? Unauthenticated visitors are routed to `/login`. |
+| **Page Guards** | `ProtectedRoute` | Does this user's specific role allow them to render this dashboard? (Wrong role redirects to `/dashboard`). |
+| **API** | Strapi Controllers | The absolute boundary. Re-checked on every database interaction, ensuring data ownership and authorization. |
 
 ---
 
-*This project was meticulously architected and executed by Antigravity, fulfilling all requirements of the Senior Engineer Master Prompt.*
+## 🎨 Design System
+
+Built meticulously fulfilling constraints against using utility-first frameworks like Tailwind CSS, this platform leverages **Vanilla CSS** (`globals.css` and CSS Modules) to achieve a modern, portfolio-ready aesthetic.
+
+- **Theme**: Dark-first, premium interface tailored to reduce cognitive load.
+- **Aesthetics**: Glassmorphism (blur backdrops), deep slate backgrounds, and vivid blue interactive accents.
+- **Micro-animations**: Custom CSS keyframes (`animate-slide-up`, `animate-fade-in`, `.hover-lift`) applied systematically to dashboards, grids, and cards to create a dynamic, living interface.
+- **Typography**: Precision spacing and modern geometric sans-serif fonts to ensure readability during long learning sessions.
+
+---
+
+## 📊 Roles & Permissions Matrix
+
+| Action | Admin | Content Manager | Instructor | Student |
+|---|---|---|---|---|
+| View platform statistics | ✅ | ❌ | ❌ | ❌ |
+| Create / edit / delete courses | ✅ | ✅ | Own only | ❌ |
+| Add / edit / delete lessons | ✅ | ✅ | Own courses | ❌ |
+| Create quizzes | ✅ | ✅ | Own courses | ❌ |
+| Write / manage blog posts | ✅ | ✅ | ❌ | ❌ |
+| Enroll in a course | ❌ | ❌ | ❌ | ✅ |
+| Take quizzes & view grades | ❌ | ❌ | ❌ | ✅ |
+| Track persistent lesson progress | ❌ | ❌ | ❌ | ✅ |
+| Edit their own profile | ✅ | ✅ | ✅ | ✅ |
+
+*Note: Enforced on the backend via the `users-permissions` grid and custom core controllers.*
+
+---
+
+## ✨ Features Completed
+
+**Backend Infrastructure** ✅
+- [x] Complete REST API with custom core controllers enforcing business logic.
+- [x] Role-Based Access Control (RBAC) securely sandboxing Instructors to their own content.
+- [x] Auto-grading quiz engine evaluating answers entirely server-side.
+- [x] Deep Strapi v5 integration utilizing `documentId` architecture for relational integrity.
+- [x] Automated database seeding script deploying full catalog and user states.
+
+**Next.js Frontend Foundation** ✅
+- [x] App Router architecture maximizing Server-Side Rendering (SSR).
+- [x] Custom CSS design system with glassmorphism and keyframe animations.
+- [x] Secure `httpOnly` JWT authentication flow.
+- [x] Protected routes and smart dashboard redirects based on parsed JWT roles.
+- [x] Elegant empty states, loading skeletons, and immersive error handling.
+
+**Student Experience** ✅
+- [x] Immersive course catalog with visual difficulty indicators.
+- [x] Dynamic "Continue Learning" widget tracking most recent course engagement.
+- [x] Robust Lesson Player with persistent progress checking.
+- [x] Interactive Quiz Interface with instant auto-graded score reveals.
+- [x] Dedicated Notes system saving insights directly to local storage per course.
+
+**Authoring & Admin Experience** ✅
+- [x] Role-tailored overview dashboards displaying distinct analytics components based on authentication.
+- [x] Instructor cohort analysis tracking student progression across owned courses.
+- [x] Complete Blog publishing workflow supporting Draft and Published states.
+- [x] Admin system-wide overview monitoring global platform health.
