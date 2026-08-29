@@ -12,6 +12,36 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database 
     );
   }
 
+  const databaseUrl = env('DATABASE_URL');
+  let postgresConnection: Record<string, any> = {
+    ssl: env.bool('DATABASE_SSL', false) ? {
+      rejectUnauthorized: env.bool('DATABASE_SSL_REJECT_UNAUTHORIZED', false),
+    } : false,
+    schema: env('DATABASE_SCHEMA', 'public'),
+  };
+
+  if (databaseUrl) {
+    try {
+      const parsedUrl = new URL(databaseUrl);
+      postgresConnection.host = parsedUrl.hostname;
+      postgresConnection.port = parsedUrl.port ? parseInt(parsedUrl.port, 10) : 5432;
+      postgresConnection.database = parsedUrl.pathname.replace(/^\//, '');
+      postgresConnection.user = decodeURIComponent(parsedUrl.username);
+      postgresConnection.password = decodeURIComponent(parsedUrl.password);
+      if (parsedUrl.searchParams.get('sslmode') === 'disable') {
+        postgresConnection.ssl = false;
+      }
+    } catch (e) {
+      postgresConnection.connectionString = databaseUrl;
+    }
+  } else {
+    postgresConnection.host = env('DATABASE_HOST', env('PGHOST', 'localhost'));
+    postgresConnection.port = env.int('DATABASE_PORT', env.int('PGPORT', 5432));
+    postgresConnection.database = env('DATABASE_NAME', env('PGDATABASE', 'strapi'));
+    postgresConnection.user = env('DATABASE_USERNAME', env('PGUSER', 'strapi'));
+    postgresConnection.password = env('DATABASE_PASSWORD', env('PGPASSWORD', 'strapi'));
+  }
+
   const connections: Record<Core.Config.Database.ClientKind, Core.Config.Database['connection']> = {
     mysql: {
       client: 'mysql',
@@ -34,18 +64,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database 
     },
     postgres: {
       client: 'postgres',
-      connection: {
-        connectionString: env('DATABASE_URL'),
-        host: env('DATABASE_HOST', 'localhost'),
-        port: env.int('DATABASE_PORT', 5432),
-        database: env('DATABASE_NAME', 'strapi'),
-        user: env('DATABASE_USERNAME', 'strapi'),
-        password: env('DATABASE_PASSWORD', 'strapi'),
-        ssl: env.bool('DATABASE_SSL', false) ? {
-          rejectUnauthorized: env.bool('DATABASE_SSL_REJECT_UNAUTHORIZED', false),
-        } : false,
-        schema: env('DATABASE_SCHEMA', 'public'),
-      },
+      connection: postgresConnection,
       pool: { min: env.int('DATABASE_POOL_MIN', 2), max: env.int('DATABASE_POOL_MAX', 10) },
     },
     sqlite: {
