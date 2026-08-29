@@ -30,7 +30,14 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
       jwt: {
         expiresIn: '30d',
       },
-      jwtManagement: 'legacy-support',
+      jwtManagement: 'refresh',
+      sessions: {
+        httpOnly: true,
+        cookie: {
+          secure: false,
+          sameSite: 'lax',
+        }
+      },
     },
   },
   upload: {
