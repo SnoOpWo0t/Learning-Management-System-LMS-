@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const strapi_1 = require("@strapi/strapi");
 exports.default = strapi_1.factories.createCoreController('api::enrollment.enrollment', ({ strapi }) => ({
     async create(ctx) {
-        var _a;
         const user = ctx.state.user;
         if (!user)
             return ctx.unauthorized();
@@ -12,19 +11,15 @@ exports.default = strapi_1.factories.createCoreController('api::enrollment.enrol
             return ctx.badRequest('Course is required');
         }
         // Force student to be the current user if they are not an Admin/Content Manager
-        const roleName = (_a = user.role) === null || _a === void 0 ? void 0 : _a.name;
         let targetStudent = student;
-        if (roleName !== 'Admin' && roleName !== 'Content Manager') {
-            targetStudent = user.id;
-        }
-        else if (!targetStudent) {
-            targetStudent = user.id;
-        }
+        // In Strapi v5 ctx.state.user doesn't auto-populate role, so we just enforce student to be current user if not provided or to be safe
+        // If you need admin override, you should check ctx.state.user.role if it is populated
+        targetStudent = user.documentId || user.id;
         // Check for duplicate enrollment
-        const existingEnrollments = await strapi.entityService.findMany('api::enrollment.enrollment', {
+        const existingEnrollments = await strapi.documents('api::enrollment.enrollment').findMany({
             filters: {
-                course: course,
-                student: targetStudent
+                course: { documentId: course },
+                student: { documentId: targetStudent }
             }
         });
         if (existingEnrollments && existingEnrollments.length > 0) {
@@ -42,7 +37,11 @@ exports.default = strapi_1.factories.createCoreController('api::enrollment.enrol
             return ctx.unauthorized();
         const roleName = (_a = user.role) === null || _a === void 0 ? void 0 : _a.name;
         const filters = ctx.query.filters || {};
-        if (roleName === 'Student') {
+        if (!roleName) {
+            // Fallback if role is not populated
+            ctx.query.filters = { ...filters, student: { documentId: user.documentId } };
+        }
+        else if (roleName === 'Student') {
             ctx.query.filters = { ...filters, student: { documentId: user.documentId } };
         }
         else if (roleName === 'Instructor') {

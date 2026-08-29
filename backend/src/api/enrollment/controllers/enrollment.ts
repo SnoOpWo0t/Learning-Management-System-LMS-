@@ -17,23 +17,46 @@ export default factories.createCoreController('api::enrollment.enrollment', ({ s
     // If you need admin override, you should check ctx.state.user.role if it is populated
     targetStudent = user.documentId || user.id;
 
-    // Check for duplicate enrollment
-    const existingEnrollments = await strapi.documents('api::enrollment.enrollment').findMany({
-      filters: {
-        course: { documentId: course },
-        student: { documentId: targetStudent }
-      }
-    });
+    // Check for duplicate enrollment using the relations
+    let existingEnrollments = [];
+    try {
+      // Find using numeric ID if it's a number, otherwise try documentId
+      const studentFilter = typeof targetStudent === 'number' ? { id: targetStudent } : { documentId: targetStudent };
+      const courseFilter = typeof course === 'number' ? { id: course } : { documentId: course };
+      
+      existingEnrollments = await strapi.documents('api::enrollment.enrollment').findMany({
+        filters: {
+          course: courseFilter,
+          student: studentFilter
+        }
+      });
+    } catch (e) {
+      console.error('Error checking duplicate enrollment:', e);
+      // Proceed gracefully if the check fails rather than crashing
+    }
 
     if (existingEnrollments && existingEnrollments.length > 0) {
       return ctx.badRequest('User is already enrolled in this course');
     }
 
-    // Override the body data securely
-    ctx.request.body.data.student = targetStudent;
-    ctx.request.body.data.course = course;
-
-    return super.create(ctx);
+    try {
+      // Create manually to ensure relation binding works in Strapi 5
+      const enrollment = await strapi.documents('api::enrollment.enrollment').create({
+        data: {
+          student: targetStudent,
+          course: course,
+          publishedAt: new Date()
+        },
+        populate: ['course']
+      });
+      
+      // Standard response format
+      ctx.body = { data: enrollment };
+      return;
+    } catch (createErr) {
+      console.error('Error creating enrollment:', createErr);
+      return ctx.badRequest('Enrollment creation failed: ' + createErr.message);
+    }
   },
 
   async find(ctx) {

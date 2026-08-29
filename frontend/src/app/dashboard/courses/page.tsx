@@ -44,8 +44,8 @@ export default function BrowseCoursesPage() {
         })
       });
       alert('Successfully enrolled!');
-    } catch (err) {
-      alert('Enrollment failed. You might already be enrolled.');
+    } catch (err: any) {
+      alert(err.message || 'Enrollment failed. You might already be enrolled.');
     } finally {
       setEnrolling(null);
     }
