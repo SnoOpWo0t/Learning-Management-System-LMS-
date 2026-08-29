@@ -13,34 +13,24 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database 
   }
 
   const databaseUrl = env('DATABASE_URL');
-  const isInternalRailway = databaseUrl && (databaseUrl.includes('.railway.internal') || databaseUrl.includes('localhost'));
-  const useSsl = !isInternalRailway && env.bool('DATABASE_SSL', false);
-
-  let postgresConnection: Record<string, any> = {
-    ssl: useSsl ? { rejectUnauthorized: false } : false,
-    schema: env('DATABASE_SCHEMA', 'public'),
-  };
+  let postgresConnection: Record<string, any> = {};
 
   if (databaseUrl) {
-    try {
-      const parsedUrl = new URL(databaseUrl);
-      postgresConnection.host = parsedUrl.hostname;
-      postgresConnection.port = parsedUrl.port ? parseInt(parsedUrl.port, 10) : 5432;
-      postgresConnection.database = parsedUrl.pathname.replace(/^\//, '');
-      postgresConnection.user = decodeURIComponent(parsedUrl.username);
-      postgresConnection.password = decodeURIComponent(parsedUrl.password);
-      if (parsedUrl.searchParams.get('sslmode') === 'disable' || parsedUrl.hostname.includes('.railway.internal') || parsedUrl.hostname === 'localhost') {
-        postgresConnection.ssl = false;
-      }
-    } catch (e) {
-      postgresConnection.connectionString = databaseUrl;
-    }
+    // Railway handles SSL internally, but if forced, use rejectUnauthorized: false
+    const useSsl = env.bool('DATABASE_SSL', false) || databaseUrl.includes('sslmode=require');
+    
+    postgresConnection = {
+      connectionString: databaseUrl,
+      ssl: useSsl ? { rejectUnauthorized: false } : false,
+      schema: env('DATABASE_SCHEMA', 'public'),
+    };
   } else {
     postgresConnection.host = env('DATABASE_HOST', env('PGHOST', 'localhost'));
     postgresConnection.port = env.int('DATABASE_PORT', env.int('PGPORT', 5432));
     postgresConnection.database = env('DATABASE_NAME', env('PGDATABASE', 'strapi'));
     postgresConnection.user = env('DATABASE_USERNAME', env('PGUSER', 'strapi'));
     postgresConnection.password = env('DATABASE_PASSWORD', env('PGPASSWORD', 'strapi'));
+    postgresConnection.ssl = env.bool('DATABASE_SSL', false) ? { rejectUnauthorized: false } : false;
   }
 
   const connections: Record<Core.Config.Database.ClientKind, Core.Config.Database['connection']> = {
