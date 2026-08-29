@@ -44,10 +44,11 @@ function StudentOverview() {
       const quizRes = await fetchAPI(`/quiz-results?filters[student][id][$eq]=${user?.id}&populate=quiz`, { headers: { Authorization: `Bearer ${token}` } });
       const quizResults = quizRes.data || [];
 
-      // Calculate Stats
+      // Calculate Stats (score is already stored as 0-100 percentage)
       let totalScore = 0;
       quizResults.forEach((q: any) => {
-        totalScore += (q.score / Math.max(q.totalQuestions, 1)) * 100;
+        const val = typeof q.score === 'number' ? q.score : 0;
+        totalScore += val;
       });
       const avgScore = quizResults.length > 0 ? Math.round(totalScore / quizResults.length) : 0;
 
@@ -81,7 +82,7 @@ function StudentOverview() {
       quizResults.forEach((q: any) => {
         feed.push({
           id: `q-${q.documentId}`,
-          title: `Scored ${q.score}/${q.totalQuestions} on "${q.quiz?.title || 'Assessment'}"`,
+          title: `Scored ${q.score}% on "${q.quiz?.title || 'Assessment'}"`,
           date: new Date(q.createdAt),
           type: 'quiz'
         });
