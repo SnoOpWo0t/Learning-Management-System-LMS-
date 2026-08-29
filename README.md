@@ -48,7 +48,8 @@ The backend is pre-configured to automatically seed the database on the first ru
 | **Content Manager** | `content@demo.com` | `Password123!` | Blog Creation & Publishing |
 | **Instructor** | `instructor@demo.com` | `Password123!` | Course Creation, Lesson Management, Quiz Building |
 | **Student** | `student@demo.com` | `Password123!` | Course Browsing, Enrollment, Lesson Progress, Quiz Taking |
-
+| **Student 2** | `student2@demo.com` | `Password123!` | Shows 100% completion in Course 1 with perfect auto-graded quiz score |
+| **Student 3** | `student3@demo.com` | `Password123!` | Shows 50% progression in Course 1 with partial auto-graded quiz score |
 ---
 
 ## 💻 Local Development Setup
