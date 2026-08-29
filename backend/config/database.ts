@@ -13,10 +13,11 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database 
   }
 
   const databaseUrl = env('DATABASE_URL');
+  const isInternalRailway = databaseUrl && (databaseUrl.includes('.railway.internal') || databaseUrl.includes('localhost'));
+  const useSsl = !isInternalRailway && env.bool('DATABASE_SSL', false);
+
   let postgresConnection: Record<string, any> = {
-    ssl: env.bool('DATABASE_SSL', false) ? {
-      rejectUnauthorized: env.bool('DATABASE_SSL_REJECT_UNAUTHORIZED', false),
-    } : false,
+    ssl: useSsl ? { rejectUnauthorized: false } : false,
     schema: env('DATABASE_SCHEMA', 'public'),
   };
 
@@ -28,7 +29,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database 
       postgresConnection.database = parsedUrl.pathname.replace(/^\//, '');
       postgresConnection.user = decodeURIComponent(parsedUrl.username);
       postgresConnection.password = decodeURIComponent(parsedUrl.password);
-      if (parsedUrl.searchParams.get('sslmode') === 'disable') {
+      if (parsedUrl.searchParams.get('sslmode') === 'disable' || parsedUrl.hostname.includes('.railway.internal') || parsedUrl.hostname === 'localhost') {
         postgresConnection.ssl = false;
       }
     } catch (e) {
