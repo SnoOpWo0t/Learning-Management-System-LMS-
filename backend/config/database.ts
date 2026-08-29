@@ -20,7 +20,9 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Database 
   let postgresConnection: Record<string, any> = {};
 
   if (databaseUrl) {
-    const useSsl = env.bool('DATABASE_SSL', false) || databaseUrl.includes('sslmode=require');
+    // Auto-detect Railway public proxy and force SSL
+    const isPublicProxy = databaseUrl.includes('proxy.rlwy.net') || databaseUrl.includes('.proxy.');
+    const useSsl = isPublicProxy || env.bool('DATABASE_SSL', false) || databaseUrl.includes('sslmode=require');
     
     // Parse the URL to get individual fields - more reliable than connectionString with pg
     try {
