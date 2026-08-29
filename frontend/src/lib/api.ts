@@ -8,6 +8,7 @@ export async function fetchAPI(path: string, options = {}) {
   };
 
   const mergedOptions = {
+    cache: 'no-store' as RequestCache,
     ...defaultOptions,
     ...options,
     headers: {

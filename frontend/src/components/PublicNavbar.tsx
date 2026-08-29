@@ -14,10 +14,10 @@ export default function PublicNavbar() {
   }, []);
 
   return (
-    <header className="bg-white/50 dark:bg-[#0A0A0A]/50 backdrop-blur-2xl shadow-sm sticky top-0 z-50 border-b border-gray-200/50 dark:border-white/5">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-black text-blue-600 tracking-tight">
-          LMS<span className="text-gray-800 dark:text-gray-200">.</span>
+    <header className="bg-white/95 dark:bg-[#0A0A0A]/95 backdrop-blur-xl shadow-sm sticky top-0 z-50 border-b border-gray-200/80 dark:border-white/10 transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <Link href="/" className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-0.5">
+          LMS<span className="text-gray-900 dark:text-white">.</span>
         </Link>
         <div className="flex gap-3 md:gap-4 items-center">
           <ThemeToggle />
