@@ -38,7 +38,7 @@ export default function BrowseCoursesPage() {
         headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           data: {
-            student: user?.id,
+            student: user?.documentId || user?.id,
             course: courseId
           }
         })

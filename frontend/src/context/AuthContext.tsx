@@ -8,6 +8,7 @@ export type Role = 'Admin' | 'Content Manager' | 'Instructor' | 'Student';
 
 export interface User {
   id: number;
+  documentId?: string;
   username: string;
   email: string;
   roleType?: Role;
@@ -62,6 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             setUser({
               id: userData.id,
+              documentId: userData.documentId,
               username: userData.username,
               email: userData.email,
               roleType,
@@ -100,6 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         setUser({
           id: fullUserData.id,
+          documentId: fullUserData.documentId,
           username: fullUserData.username,
           email: fullUserData.email,
           roleType,
