@@ -195,37 +195,42 @@ function StudentOverview() {
           </div>
           
           {loadingStats ? (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse h-48"></div>
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse h-40"></div>
           ) : latestEnrollment && latestEnrollment.course ? (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center group hover-lift transition-colors overflow-hidden">
-              <div className="w-full md:w-64 aspect-video bg-gray-100 dark:bg-slate-800 rounded-2xl overflow-hidden shrink-0 relative">
-                 <img src={`https://picsum.photos/seed/${latestEnrollment.course.documentId}/400/300`} alt="Course" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                 <div className="absolute inset-0 bg-black/10"></div>
-              </div>
-              
-              <div className="flex-1 min-w-0 w-full">
-                <div className="inline-flex items-center px-2.5 py-1 mb-3 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold tracking-wide uppercase">
-                  {latestEnrollment.course.difficulty || 'Course'}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm group hover-lift transition-all overflow-hidden">
+              <div className="flex flex-col sm:flex-row">
+                {/* Compact Thumbnail */}
+                <div className="w-full sm:w-48 h-32 sm:h-auto bg-gray-100 dark:bg-slate-800 overflow-hidden shrink-0 relative">
+                   <img src={`https://picsum.photos/seed/${latestEnrollment.course.documentId}/400/300`} alt="Course" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                 </div>
-                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2 truncate">{latestEnrollment.course.title}</h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 line-clamp-2 leading-relaxed">
-                  {latestEnrollment.course.description || 'Continue your learning journey where you left off.'}
-                </p>
                 
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min((latestEnrollment.progressCount * 20), 100)}%` }}></div>
+                {/* Content */}
+                <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between min-w-0">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold tracking-wide uppercase">
+                        {latestEnrollment.course.difficulty || 'Course'}
+                      </span>
+                    </div>
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">{latestEnrollment.course.title}</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1 leading-relaxed">
+                      {latestEnrollment.course.description || 'Continue your learning journey where you left off.'}
+                    </p>
                   </div>
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    {Math.min((latestEnrollment.progressCount * 20), 100)}%
-                  </span>
+                  
+                  <div className="flex items-center gap-4 mt-4">
+                    <div className="flex-1 h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500" style={{ width: `${Math.min((latestEnrollment.progressCount * 20), 100)}%` }}></div>
+                    </div>
+                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                      {Math.min((latestEnrollment.progressCount * 20), 100)}%
+                    </span>
+                    <Link href={`/dashboard/courses/${latestEnrollment.course.documentId}/learn`} className="inline-flex items-center justify-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors whitespace-nowrap">
+                      Resume
+                    </Link>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="w-full md:w-auto mt-4 md:mt-0 shrink-0">
-                <Link href={`/dashboard/courses/${latestEnrollment.course.documentId}/learn`} className="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-gray-900 dark:text-white font-medium rounded-xl transition-colors">
-                  Resume
-                </Link>
               </div>
             </div>
           ) : (
