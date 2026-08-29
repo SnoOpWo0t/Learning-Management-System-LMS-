@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm"]
+
+[phases.install]
+cmds = ["npm install", "chmod -R +x node_modules/.bin || true"]
+
+[phases.build]
+cmds = ["npx strapi build"]
+
+[start]
+cmd = "npx strapi start"
