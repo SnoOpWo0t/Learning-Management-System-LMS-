@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex flex-col min-h-screen bg-gray-50/30 dark:bg-slate-950/30">
         
         {/* Top Navbar */}
-        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm border-b border-gray-200/50 dark:border-slate-800/50 sticky top-0 z-50">
+        <header className="bg-white dark:bg-[#0F172A] shadow-sm border-b border-gray-200 dark:border-slate-800 sticky top-0 z-50 transition-colors duration-300">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               
