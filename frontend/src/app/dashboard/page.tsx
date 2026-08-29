@@ -123,7 +123,7 @@ function StudentOverview() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-12">
+    <div className="max-w-7xl mx-auto space-y-8 pb-12 animate-fade-in">
       
       {/* Welcome Banner */}
       <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800 p-8 sm:p-10 overflow-hidden">
@@ -152,7 +152,7 @@ function StudentOverview() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
-          <div key={i} className={`bg-white dark:bg-slate-900 rounded-2xl p-6 border ${stat.border} shadow-sm hover:shadow-md transition-shadow`}>
+          <div key={i} style={{ animationDelay: `${i * 100}ms` }} className={`animate-slide-up opacity-0 hover-lift bg-white dark:bg-slate-900 rounded-2xl p-6 border ${stat.border} shadow-sm transition-shadow`}>
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
@@ -177,7 +177,7 @@ function StudentOverview() {
             <Link href="/dashboard/my-courses" className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline">View all</Link>
           </div>
           
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center group hover:border-blue-200 dark:hover:border-blue-800/50 transition-colors overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center group hover-lift transition-colors overflow-hidden">
             <div className="w-full md:w-64 aspect-video bg-gray-100 dark:bg-slate-800 rounded-2xl overflow-hidden shrink-0 relative">
                <img src="https://picsum.photos/seed/advanced-react/400/300" alt="Course" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                <div className="absolute inset-0 bg-black/10"></div>
@@ -230,7 +230,7 @@ function StudentOverview() {
                 displayedActivities.map((activity, i) => {
                   const style = getActivityStyle(activity.type);
                   return (
-                    <div key={activity.id} className="flex gap-4">
+                    <div key={activity.id} style={{ animationDelay: `${(i + 4) * 100}ms` }} className="flex gap-4 animate-slide-up opacity-0">
                       <div className={`w-10 h-10 rounded-full flex flex-none items-center justify-center text-lg ${style.bg} ${style.color}`}>
                         {style.icon}
                       </div>
@@ -246,9 +246,12 @@ function StudentOverview() {
                   );
                 })
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-500 py-10">
-                  {Icons.Book}
-                  <p className="mt-2 text-sm">No recent activity yet.</p>
+                <div className="h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 py-10 animate-fade-in">
+                  <div className="w-12 h-12 rounded-full bg-gray-50 dark:bg-slate-800 flex items-center justify-center mb-3">
+                    {Icons.Book}
+                  </div>
+                  <p className="text-sm font-medium">No recent activity yet.</p>
+                  <p className="text-xs mt-1 text-center max-w-[200px]">Enroll in a course to see your progress here.</p>
                 </div>
               )}
             </div>

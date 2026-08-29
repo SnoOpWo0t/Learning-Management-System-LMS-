@@ -65,9 +65,9 @@ export default function AdminOverview() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8" style={{ paddingBottom: '3rem' }}>
+    <div className="max-w-7xl mx-auto space-y-8 animate-fade-in" style={{ paddingBottom: '3rem' }}>
       {/* Welcome Banner */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-gray-100 dark:border-slate-800 shadow-sm" style={{ position: 'relative', overflow: 'hidden' }}>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-gray-100 dark:border-slate-800 shadow-sm animate-slide-up" style={{ position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 0, right: 0, width: '16rem', height: '16rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '9999px', filter: 'blur(48px)', transform: 'translate(30%, -50%)' }}></div>
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '16rem', height: '16rem', background: 'rgba(168, 85, 247, 0.1)', borderRadius: '9999px', filter: 'blur(48px)', transform: 'translate(-30%, 30%)' }}></div>
 
@@ -90,7 +90,7 @@ export default function AdminOverview() {
         <>
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-between hover-lift animate-slide-up" style={{ animationDelay: '100ms' }}>
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Users</p>
                 <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{stats.users}</h3>
@@ -99,7 +99,7 @@ export default function AdminOverview() {
                 👥
               </div>
             </div>
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-between hover-lift animate-slide-up" style={{ animationDelay: '200ms' }}>
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Courses</p>
                 <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{stats.courses}</h3>
@@ -108,7 +108,7 @@ export default function AdminOverview() {
                 📚
               </div>
             </div>
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-between hover-lift animate-slide-up" style={{ animationDelay: '300ms' }}>
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Enrollments</p>
                 <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{stats.enrollments}</h3>
@@ -121,7 +121,7 @@ export default function AdminOverview() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* User Roles Pie Chart */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm animate-slide-up" style={{ animationDelay: '400ms' }}>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">User Role Distribution</h3>
               <div style={{ height: '300px', width: '100%' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -156,7 +156,7 @@ export default function AdminOverview() {
             </div>
 
             {/* Transaction Analytics */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm animate-slide-up" style={{ animationDelay: '500ms' }}>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Transaction Revenue (Mocked)</h3>
               <div style={{ height: '300px', width: '100%' }}>
                 <ResponsiveContainer width="100%" height="100%">

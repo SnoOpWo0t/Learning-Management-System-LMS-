@@ -38,7 +38,7 @@ export default async function HomePage() {
               Over {courses.length || '50'}+ Premium Courses
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 leading-[1.1] text-gray-900 dark:text-white">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 leading-[1.1] text-gray-900 dark:text-white animate-slide-up">
               Master your craft with <br className="hidden md:block"/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
                 world-class experts.
@@ -49,7 +49,7 @@ export default async function HomePage() {
               The ultimate platform for modern professionals. Learn system design, UI/UX, and advanced engineering from the people who build the future.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full sm:w-auto animate-fade-in" style={{ animationDelay: '200ms' }}>
               <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-full text-base hover:bg-blue-700 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-1 flex items-center justify-center gap-2">
                 Start Learning Free
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -140,7 +140,7 @@ function CategorySection({
   courses: any[];
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-gray-200 dark:border-white/10">
         <div>
           <div className="flex items-center gap-3 mb-1.5">
@@ -179,7 +179,7 @@ function CourseCard({ course }: { course: any }) {
   return (
     <Link 
       href={`/courses/${course.documentId}`} 
-      className="group flex flex-col h-full bg-white dark:bg-[#111] rounded-2xl overflow-hidden border border-gray-200/80 dark:border-white/10 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-400 dark:hover:border-blue-500/40 hover:-translate-y-1.5 transition-all duration-300"
+      className="group flex flex-col h-full bg-white dark:bg-[#111] rounded-2xl overflow-hidden border border-gray-200/80 dark:border-white/10 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-400 dark:hover:border-blue-500/40 hover-lift animate-slide-up transition-all duration-300"
     >
       {/* Card Header Image / Banner */}
       <div className="h-48 w-full bg-gradient-to-br from-gray-800 to-gray-950 relative overflow-hidden shrink-0">

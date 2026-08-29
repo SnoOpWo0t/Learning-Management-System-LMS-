@@ -461,13 +461,13 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
               </div>
 
               {quizResult ? (
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-10 shadow-2xl border border-gray-100 dark:border-slate-800 text-center relative overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-10 shadow-2xl border border-gray-100 dark:border-slate-800 text-center relative overflow-hidden animate-scale-up">
                   <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-4">Final Score</p>
-                  <div className="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-purple-500 to-blue-600 mb-8">
+                  <div className="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-purple-500 to-blue-600 mb-8 animate-fade-in" style={{ animationDelay: '300ms' }}>
                     {quizResult.score} <span className="text-4xl text-gray-300 dark:text-slate-700">/ {quizResult.totalQuestions}</span>
                   </div>
                   <div className="mt-8">
-                     <button onClick={() => router.push('/dashboard')} className="px-8 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors">
+                     <button onClick={() => router.push('/dashboard')} className="px-8 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 hover-lift transition-colors">
                        Return to Dashboard
                      </button>
                   </div>
@@ -475,7 +475,7 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
               ) : (
                 <div className="space-y-6">
                   {quiz.questions?.map((q: any, index: number) => (
-                    <div key={q.id || index} className="bg-white dark:bg-slate-900 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-slate-800">
+                    <div key={q.id || index} className="bg-white dark:bg-slate-900 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-slate-800 animate-slide-up opacity-0" style={{ animationDelay: `${index * 100}ms` }} >
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-sm mr-3">{index + 1}</span> 
                         {q.text}
@@ -484,7 +484,7 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
                         {q.options?.map((opt: string, optIdx: number) => (
                           <label key={optIdx} className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                             answers[q.id] === opt 
-                              ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20 shadow-sm' 
+                              ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20 shadow-sm transform scale-[1.01]' 
                               : 'border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50'
                           }`}>
                             <input 
@@ -567,8 +567,8 @@ export default function CoursePlayerClient({ courseId, courseTitle, lessons, qui
 
       {/* Rating Modal */}
       {showRatingModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-8 shadow-2xl relative animate-scale-up">
             <button 
               onClick={() => setShowRatingModal(false)}
               className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-gray-50 dark:bg-slate-800 rounded-full transition-colors"
