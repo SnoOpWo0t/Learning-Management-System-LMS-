@@ -251,49 +251,53 @@ async function grantRolePermissions(strapi: Core.Strapi) {
   const adminPermissions = [
     ...basePermissions,
     // Manage users
-    'plugin::users-permissions.user.destroy',
+    'plugin::users-permissions.user.destroy', 'plugin::users-permissions.user.delete',
     'plugin::users-permissions.role.find',
     // Courses
-    'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy',
+    'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy', 'api::course.course.delete',
     // Lessons
-    'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy',
+    'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy', 'api::lesson.lesson.delete',
     // Quizzes
-    'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy',
-    'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
+    'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy', 'api::quiz.quiz.delete',
+    'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy', 'api::question.question.delete',
     // Blogs
-    'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy',
+    'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy', 'api::blog-post.blog-post.delete',
     // Progress / Enrollments
-    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
+    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::enrollment.enrollment.delete', 'api::enrollment.enrollment.destroy',
+    'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::lesson-progress.lesson-progress.delete', 'api::lesson-progress.lesson-progress.destroy',
+    'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne', 'api::quiz-result.quiz-result.delete', 'api::quiz-result.quiz-result.destroy',
     // Ratings
-    'api::course-rating.course-rating.find', 'api::course-rating.course-rating.findOne', 'api::course-rating.course-rating.create', 'api::course-rating.course-rating.update', 'api::course-rating.course-rating.destroy',
+    'api::course-rating.course-rating.find', 'api::course-rating.course-rating.findOne', 'api::course-rating.course-rating.create', 'api::course-rating.course-rating.update', 'api::course-rating.course-rating.destroy', 'api::course-rating.course-rating.delete',
   ];
 
   const cmPermissions = [
     ...basePermissions,
     // Courses
-    'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy',
+    'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy', 'api::course.course.delete',
     // Lessons
-    'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy',
+    'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy', 'api::lesson.lesson.delete',
     // Quizzes
-    'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy',
-    'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
+    'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy', 'api::quiz.quiz.delete',
+    'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy', 'api::question.question.delete',
     // Blogs
-    'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy',
+    'api::blog-post.blog-post.find', 'api::blog-post.blog-post.findOne', 'api::blog-post.blog-post.create', 'api::blog-post.blog-post.update', 'api::blog-post.blog-post.destroy', 'api::blog-post.blog-post.delete',
     // Progress / Enrollments
-    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
+    'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::enrollment.enrollment.delete', 'api::enrollment.enrollment.destroy',
+    'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::lesson-progress.lesson-progress.delete', 'api::lesson-progress.lesson-progress.destroy',
+    'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne', 'api::quiz-result.quiz-result.delete', 'api::quiz-result.quiz-result.destroy',
     // Ratings
-    'api::course-rating.course-rating.find', 'api::course-rating.course-rating.findOne', 'api::course-rating.course-rating.destroy',
+    'api::course-rating.course-rating.find', 'api::course-rating.course-rating.findOne', 'api::course-rating.course-rating.destroy', 'api::course-rating.course-rating.delete',
   ];
 
   const instructorPermissions = [
     ...basePermissions,
     // Courses (Own only - filtered in frontend/policies, but they need basic CRUD here)
-    'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy',
+    'api::course.course.find', 'api::course.course.findOne', 'api::course.course.create', 'api::course.course.update', 'api::course.course.destroy', 'api::course.course.delete',
     // Lessons
-    'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy',
+    'api::lesson.lesson.find', 'api::lesson.lesson.findOne', 'api::lesson.lesson.create', 'api::lesson.lesson.update', 'api::lesson.lesson.destroy', 'api::lesson.lesson.delete',
     // Quizzes
-    'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy',
-    'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy',
+    'api::quiz.quiz.find', 'api::quiz.quiz.findOne', 'api::quiz.quiz.create', 'api::quiz.quiz.update', 'api::quiz.quiz.destroy', 'api::quiz.quiz.delete',
+    'api::question.question.find', 'api::question.question.findOne', 'api::question.question.create', 'api::question.question.update', 'api::question.question.destroy', 'api::question.question.delete',
     // Progress / Enrollments
     'api::enrollment.enrollment.find', 'api::enrollment.enrollment.findOne', 'api::lesson-progress.lesson-progress.find', 'api::lesson-progress.lesson-progress.findOne', 'api::quiz-result.quiz-result.find', 'api::quiz-result.quiz-result.findOne',
     // Ratings
