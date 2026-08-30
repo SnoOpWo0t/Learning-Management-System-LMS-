@@ -477,7 +477,7 @@ You are ready! Sign in using any demo account from the table above with password
    PORT=1337
    NODE_ENV=production
    
-   # Security Keys
+   # Security Keys (Generate via node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
    APP_KEYS=your_generated_app_keys
    API_TOKEN_SALT=your_api_token_salt
    ADMIN_JWT_SECRET=your_admin_jwt_secret
@@ -508,6 +508,20 @@ You are ready! Sign in using any demo account from the table above with password
    NEXT_PUBLIC_API_URL=https://your-backend-railway-url.up.railway.app
    ```
 4. Click **Deploy**. Vercel will build and distribute the Next.js App Router globally on its edge network.
+
+---
+
+## 🧪 End-to-End Verification Checklist
+
+| Verification Item | Action | Expected Output |
+| :--- | :--- | :--- |
+| **Public Discovery** | Visit `/` | Course catalog, difficulty badges, and public blogs load. |
+| **Dynamic CTA** | Visit `/courses/[id]` | Shows `Sign In to Enroll` (Guest), `Enroll Now` (Logged In), or `Continue Learning` (Enrolled). |
+| **Video Player & Notes** | Open `/dashboard/courses/[id]/learn` | Video streams, progress checkboxes update DB %, sticky notes persist per course. |
+| **Server-Side Quiz** | Submit Assessment Quiz | Score calculated server-side, results stored in DB, confetti trigger on completion. |
+| **Instructor Isolation** | Log in as Instructor | Only courses authored by this instructor appear in their management view. |
+| **Content Manager** | Log in as Content Manager | Editorial Hub loads with content mix pie charts; blog posts support Draft/Publish states. |
+| **Admin Cockpit** | Log in as Admin | System overview charts load; user roles can be reassigned; cascading course deletion executes cleanly. |
 
 ---
 
