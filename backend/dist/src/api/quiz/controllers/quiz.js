@@ -1,6 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const strapi_1 = require("@strapi/strapi");
+// ============================================================================
+// 🎬 [VIDEO DEMO - STEP 5: BACKEND RBAC ROLE RESOLUTION HELPER]
+// Dynamically fetches the user's role from the PostgreSQL database
+// ensuring role permissions are enforced server-side, not just in UI.
+// ============================================================================
 async function getUserRole(strapi, user) {
     var _a, _b;
     if ((_a = user.role) === null || _a === void 0 ? void 0 : _a.name)
@@ -17,11 +22,17 @@ async function getUserRole(strapi, user) {
     return 'Student';
 }
 exports.default = strapi_1.factories.createCoreController('api::quiz.quiz', ({ strapi }) => ({
+    // ============================================================================
+    // 🎬 [VIDEO DEMO - STEP 5: RBAC CREATE QUIZ GUARD]
+    // Only Admin, Content Manager, and Instructor can create quizzes.
+    // Instructors are strictly sandboxed to their own courses.
+    // ============================================================================
     async create(ctx) {
         const user = ctx.state.user;
         if (!user)
             return ctx.unauthorized();
         const roleName = await getUserRole(strapi, user);
+        // 1. Role verification check
         if (roleName !== 'Admin' && roleName !== 'Content Manager' && roleName !== 'Instructor') {
             return ctx.forbidden('You do not have permission to create quizzes');
         }
@@ -29,6 +40,7 @@ exports.default = strapi_1.factories.createCoreController('api::quiz.quiz', ({ s
         if (!course) {
             return ctx.badRequest('A course must be provided when creating a quiz');
         }
+        // 2. Instructor ownership verification check
         if (roleName === 'Instructor') {
             let courseEntity;
             if (typeof course === 'string' && isNaN(Number(course))) {
@@ -108,15 +120,13 @@ exports.default = strapi_1.factories.createCoreController('api::quiz.quiz', ({ s
                     return ctx.forbidden('You can only delete quizzes in your own courses');
                 }
             }
-            // Delete quiz results
+            // Cascading delete quiz results before removing quiz entity
             await strapi.db.query('api::quiz-result.quiz-result').deleteMany({
                 where: { quiz: quiz.id }
             });
-            // Delete questions
             await strapi.db.query('api::question.question').deleteMany({
                 where: { quiz: quiz.id }
             });
-            // Delete quiz
             await strapi.db.query('api::quiz.quiz').delete({
                 where: { id: quiz.id }
             });
@@ -133,17 +143,23 @@ exports.default = strapi_1.factories.createCoreController('api::quiz.quiz', ({ s
             return ctx.badRequest('Failed to delete quiz: ' + ((err === null || err === void 0 ? void 0 : err.message) || 'Unknown error'));
         }
     },
+    // ============================================================================
+    // 🎬 [VIDEO DEMO - STEP 6: QUIZ AUTO-GRADING LOGIC (EXPLAIN THIS IN VIDEO)]
+    // Demonstrates server-side grading where correct answers are NEVER sent to the client!
+    // ============================================================================
     async submit(ctx) {
+        // 1. Authenticate user from Bearer JWT
         const user = ctx.state.user;
         const { id } = ctx.params;
         if (!user)
             return ctx.unauthorized();
+        // 2. Validate incoming answer payload
         const { answers } = ctx.request.body;
         if (!answers || typeof answers !== 'object') {
             return ctx.badRequest('Answers must be provided as an object mapping question IDs to selected options.');
         }
         try {
-            // Fetch quiz with questions using db query
+            // 3. Fetch Quiz and associated Questions directly from PostgreSQL database
             let quiz;
             if (typeof id === 'string' && isNaN(Number(id))) {
                 quiz = await strapi.db.query('api::quiz.quiz').findOne({
@@ -163,18 +179,18 @@ exports.default = strapi_1.factories.createCoreController('api::quiz.quiz', ({ s
             if (questions.length === 0) {
                 return ctx.badRequest('This quiz has no questions.');
             }
-            // Calculate score
+            // 4. Calculate score on backend: compare student answer vs hidden question.correctAnswer
             let correctCount = 0;
             const totalQuestions = questions.length;
             for (const question of questions) {
-                // Accept either numeric id or documentId from frontend
                 const studentAnswer = answers[question.documentId] || answers[question.id] || answers[String(question.id)];
                 if (studentAnswer && studentAnswer === question.correctAnswer) {
                     correctCount++;
                 }
             }
+            // 5. Compute percentage: (correctCount / totalQuestions) * 100
             const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
-            // Save result using db.query with numeric IDs
+            // 6. Persist Quiz Result permanently in PostgreSQL database
             await strapi.db.query('api::quiz-result.quiz-result').create({
                 data: {
                     student: user.id,
@@ -184,6 +200,7 @@ exports.default = strapi_1.factories.createCoreController('api::quiz.quiz', ({ s
                     publishedAt: new Date(),
                 }
             });
+            // 7. Return safe score payload back to Next.js frontend (trigger confetti animation)
             return {
                 data: {
                     score,

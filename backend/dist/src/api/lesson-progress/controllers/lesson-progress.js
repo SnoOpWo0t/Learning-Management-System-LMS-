@@ -2,17 +2,22 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const strapi_1 = require("@strapi/strapi");
 exports.default = strapi_1.factories.createCoreController('api::lesson-progress.lesson-progress', ({ strapi }) => ({
+    // ============================================================================
+    // 🎬 [VIDEO DEMO - STEP 6: PROGRESS TRACKING LOGIC (EXPLAIN THIS IN VIDEO)]
+    // Handles real-time lesson completion persistence per student per course.
+    // ============================================================================
     async create(ctx) {
+        // 1. Check User Authentication
         const user = ctx.state.user;
         if (!user)
             return ctx.unauthorized();
-        const { lesson, student } = ctx.request.body.data || {};
+        const { lesson } = ctx.request.body.data || {};
         if (!lesson) {
             return ctx.badRequest('Lesson is required');
         }
         const targetStudentId = user.id;
         try {
-            // 1. Fetch the lesson to get numeric ID and its course numeric ID
+            // 2. Fetch the lesson and its parent course from PostgreSQL database
             let lessonEntity;
             if (typeof lesson === 'string') {
                 lessonEntity = await strapi.db.query('api::lesson.lesson').findOne({
@@ -32,7 +37,7 @@ exports.default = strapi_1.factories.createCoreController('api::lesson-progress.
             if (!lessonEntity.course) {
                 return ctx.badRequest('Lesson has no associated course');
             }
-            // 2. Ensure user is enrolled in the course (using numeric IDs)
+            // 3. Ensure student is actively enrolled in the course before recording progress
             const enrollments = await strapi.db.query('api::enrollment.enrollment').findMany({
                 where: {
                     student: targetStudentId,
@@ -42,7 +47,7 @@ exports.default = strapi_1.factories.createCoreController('api::lesson-progress.
             if (!enrollments || enrollments.length === 0) {
                 return ctx.forbidden('You are not enrolled in this course');
             }
-            // 3. Check for duplicate progress (using numeric IDs)
+            // 4. Prevent duplicate completion records for the same lesson
             const existingProgress = await strapi.db.query('api::lesson-progress.lesson-progress').findMany({
                 where: {
                     student: targetStudentId,
@@ -52,7 +57,7 @@ exports.default = strapi_1.factories.createCoreController('api::lesson-progress.
             if (existingProgress && existingProgress.length > 0) {
                 return ctx.badRequest('You have already completed this lesson');
             }
-            // 4. Create manually on DB layer
+            // 5. Persist completed progress record in database (survives page refresh)
             const progress = await strapi.db.query('api::lesson-progress.lesson-progress').create({
                 data: {
                     student: targetStudentId,
@@ -69,6 +74,10 @@ exports.default = strapi_1.factories.createCoreController('api::lesson-progress.
             return ctx.badRequest('Failed to mark lesson complete: ' + ((err === null || err === void 0 ? void 0 : err.message) || 'Unknown error'));
         }
     },
+    // ============================================================================
+    // 🎬 [VIDEO DEMO - STEP 5: DATA ISOLATION FILTER (STUDENT vs INSTRUCTOR)]
+    // Ensures students only see their own progress, and instructors see their cohort.
+    // ============================================================================
     async find(ctx) {
         var _a;
         const user = ctx.state.user;

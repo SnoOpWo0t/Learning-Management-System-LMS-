@@ -1,6 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const strapi_1 = require("@strapi/strapi");
+// ============================================================================
+// 🎬 [VIDEO DEMO - STEP 5: ROLE-BASED ACCESS CONTROL (RBAC) CONTROLLER]
+// Demonstrates how permissions and ownership are strictly enforced on backend.
+// ============================================================================
 async function getUserRole(strapi, user) {
     var _a, _b;
     if ((_a = user.role) === null || _a === void 0 ? void 0 : _a.name)
@@ -17,16 +21,18 @@ async function getUserRole(strapi, user) {
     return 'Student';
 }
 exports.default = strapi_1.factories.createCoreController('api::course.course', ({ strapi }) => ({
+    // 1. RBAC Guard on Course Creation
     async create(ctx) {
         const user = ctx.state.user;
         if (!user) {
             return ctx.unauthorized('You must be logged in to create a course');
         }
         const roleName = await getUserRole(strapi, user);
+        // Reject Students from creating courses
         if (roleName !== 'Admin' && roleName !== 'Content Manager' && roleName !== 'Instructor') {
             return ctx.forbidden('You do not have permission to create courses');
         }
-        // Force the instructor to be the current user if they are an Instructor
+        // Force instructor relation to current authenticated user
         if (roleName === 'Instructor') {
             if (!ctx.request.body.data)
                 ctx.request.body.data = {};
@@ -41,6 +47,7 @@ exports.default = strapi_1.factories.createCoreController('api::course.course', 
         }
         return super.create(ctx);
     },
+    // 2. Data Isolation on Course Listing (Instructors only see their own courses in studio)
     async find(ctx) {
         const user = ctx.state.user;
         if (user) {
@@ -52,6 +59,7 @@ exports.default = strapi_1.factories.createCoreController('api::course.course', 
         }
         return super.find(ctx);
     },
+    // 3. Ownership Verification on Course Updates
     async update(ctx) {
         const user = ctx.state.user;
         const { id } = ctx.params;
@@ -83,6 +91,11 @@ exports.default = strapi_1.factories.createCoreController('api::course.course', 
         }
         return super.update(ctx);
     },
+    // ============================================================================
+    // 🎬 [VIDEO DEMO - STEP 4: CASCADING DATABASE COURSE DELETION]
+    // Cleans all related child entities (Enrollments, Ratings, Quizzes, Questions,
+    // Quiz Results, Lessons, Progress) before deleting parent Course.
+    // ============================================================================
     async delete(ctx) {
         const user = ctx.state.user;
         const { id } = ctx.params;
@@ -93,7 +106,6 @@ exports.default = strapi_1.factories.createCoreController('api::course.course', 
             return ctx.forbidden('You do not have permission to delete courses');
         }
         try {
-            // Find course by documentId or numeric id
             let course;
             if (typeof id === 'string' && isNaN(Number(id))) {
                 course = await strapi.db.query('api::course.course').findOne({
@@ -114,16 +126,15 @@ exports.default = strapi_1.factories.createCoreController('api::course.course', 
                     return ctx.forbidden('You can only delete your own courses');
                 }
             }
-            // Cascading deletion of related entities to prevent foreign key errors
-            // 1. Delete Enrollments
+            // Step 1: Cascading delete Enrollments
             await strapi.db.query('api::enrollment.enrollment').deleteMany({
                 where: { course: course.id }
             });
-            // 2. Delete Course Ratings
+            // Step 2: Cascading delete Course Ratings
             await strapi.db.query('api::course-rating.course-rating').deleteMany({
                 where: { course: course.id }
             });
-            // 3. Find and delete Quizzes & Questions & Quiz Results
+            // Step 3: Cascading delete Quizzes, Questions & Quiz Results
             const quizzes = await strapi.db.query('api::quiz.quiz').findMany({
                 where: { course: course.id }
             });
@@ -138,7 +149,7 @@ exports.default = strapi_1.factories.createCoreController('api::course.course', 
                     where: { id: quiz.id }
                 });
             }
-            // 4. Find and delete Lessons & Lesson Progresses
+            // Step 4: Cascading delete Lessons & Lesson Progress
             const lessons = await strapi.db.query('api::lesson.lesson').findMany({
                 where: { course: course.id }
             });
@@ -150,7 +161,7 @@ exports.default = strapi_1.factories.createCoreController('api::course.course', 
                     where: { id: lesson.id }
                 });
             }
-            // 5. Delete the course itself
+            // Step 5: Delete parent course entity cleanly
             await strapi.db.query('api::course.course').delete({
                 where: { id: course.id }
             });
