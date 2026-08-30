@@ -93,8 +93,8 @@ export default function ManageBlogsPage() {
       });
       setDeletingBlog(null);
       fetchBlogs();
-    } catch (err) {
-      alert('Failed to delete blog post');
+    } catch (err: any) {
+      alert(`Failed to delete blog post: ${err?.message || err}`);
     } finally {
       setSaving(false);
     }
