@@ -1,142 +1,124 @@
+# 🚀 স্টেপ-বাই-স্টেপ টেকনিক্যাল রেকর্ডিং গাইড (ভিডিওর দ্বিতীয় অংশ)
 
-# 🚀 স্টেপ-বাই-স্টেপ রেকর্ডিং গাইড (পর্ব ৫, ৬ এবং ৭)
+> **💡 প্রো-টিপ:** আপনি ঠিক যেভাবে চিন্তা করেছেন, **Data Flow** এবং **Quiz Auto-Grading Logic** একসাথে উপস্থাপন করাটাই সবচেয়ে কার্যকর ও প্রফেশনাল অ্যাপ্রোচ! এতে পরীক্ষক বুঝতে পারবেন কীভাবে ব্রাউজারের একটি অ্যাকশন ব্যাকএন্ড কোড হয়ে ডাটাবেজে পারসিস্ট হয় এবং তাৎক্ষণিক ফিডব্যাক দেয়।
 
 ---
 
-## 📌 পয়েন্ট ১: Data Flow (ডেটা কীভাবে ফ্রন্টএন্ড থেকে ব্যাকএন্ডে যায় এবং ফিরে আসে)
+## 📌 স্টেপ ১: Data Flow + Quiz Auto-Grading Logic (একসাথে কম্বাইন্ড ডেমো ও কোড)
 
-### 🖥️ স্ক্রিনে যেভাবে করবেন:
+### 🖥️ স্ক্রিনে যা যা করবেন (Sequence):
+1. **ব্রাউজারে যান:** Student হিসেবে লগইন করে যেকোনো কোর্সের কুইজ পেজে যান (`/dashboard/courses/[id]/learn` &rarr; **Quiz** ট্যাব)।
+2. **DevTools ওপেন করুন:** **`F12`** চাপুন &rarr; **`Network`** ট্যাবে গিয়ে **`Fetch/XHR`** সিলেক্ট করুন।
+3. **কুইজ সাবমিট করুন:** ৩টি প্রশ্নের উত্তর সিলেক্ট করে **"Submit Answers"** বাটনে ক্লিক করুন।
+4. **Network Request দেখান:** Network ট্যাবে আসা `submit` রিকোয়েস্টে ক্লিক করে **Headers** (Bearer JWT টোকেন) এবং **Payload** (`{ answers: { ... } }`) দেখান।
+5. **সরাসরি VS Code-এ সুইচ করুন:** [`backend/src/api/quiz/controllers/quiz.ts`](file:///F:/Learning%20Management%20System%20%28LMS%29/backend/src/api/quiz/controllers/quiz.ts) ফাইলের `submit` মেথডটি ওপেন করুন (লাইন ১৫২ থেকে ২১৮)।
+6. **কোডের স্টেপগুলো মাউস দিয়ে দেখান:**
+   * `// 1. Authenticate user from Bearer JWT`
+   * `// 3. Fetch Quiz and Questions from PostgreSQL database`
+   * `// 4. Calculate score on backend: compare student answer vs hidden question.correctAnswer`
+   * `// 5. Compute percentage: (correctCount / totalQuestions) * 100`
+   * `// 6. Persist Quiz Result permanently in PostgreSQL database`
+7. **আবার ব্রাউজারে ফেরত আসুন:** Network ট্যাবের **Response** (`{ score: 100, message: "Quiz submitted successfully!" }`) এবং স্ক্রিনে কনফেটি অ্যানিমেশন ও স্কোর ব্যাজ দেখান।
 
-1. ব্রাউজারে আপনার লোকাল বা লাইভ অ্যাপে **Student** হিসেবে লগইন অবস্থায় থাকুন (`student@demo.com` / `Password123!`)।
-2. যেকোনো কোর্সের প্লেয়ার পেজে যান: `/dashboard/courses/[id]/learn`।
-3. কীবোর্ডে **`F12`** চাপুন (বা Right Click &rarr; Inspect)।
-4. উপরে **`Network`** ট্যাবে ক্লিক করুন এবং ফিল্টারে **`Fetch/XHR`** সিলেক্ট করে রাখুন।
-5. কোর্স পেজের **Quiz** ট্যাবে যান এবং ৩টি প্রশ্নের উত্তর সিলেক্ট করুন।
-6. এবার **"Submit Answers"** বাটনে ক্লিক করুন।
-7. Network ট্যাবে নিচে একটি নতুন রিকোয়েস্ট আসবে: `submit` বা `quizzes/.../submit`। সেটিতে ক্লিক করুন:
-   * **Headers** ট্যাবে ক্লিক করে দেখান: `Authorization: Bearer <token>` এবং Request URL।
-   * **Payload** ট্যাবে ক্লিক করে দেখান: `{ answers: { ... } }`।
-   * **Response** ট্যাবে ক্লিক করে দেখান: `{ data: { score: 100, totalQuestions: 3, message: "Quiz submitted successfully!" } }`।
+---
 
 ### 🗣️ মুখে যা বলবেন (বাংলায়):
 
-> "এখন আমি প্ল্যাটফর্মের **Data Flow** আর্কিটেকচারটি ব্রাউজারের নেটওয়ার্ক ট্যাবের মাধ্যমে প্রমাণ করে দেখাচ্ছি।
->
-> ১. **Client Request:** স্টুডেন্ট যখন কুইজের উত্তর সিলেক্ট করে সাবমিট করে, তখন Next.js ফ্রন্টএন্ড থেকে Strapi ব্যাকএন্ডের `POST /api/quizzes/:id/submit` এন্ডপয়েন্টে রিকোয়েস্ট পাঠানো হয়। এখানে Headers-এ স্টুডেন্টের সিকিউর Bearer JWT টোকেন রয়েছে এবং Payload-এ স্টুডেন্টের দেওয়া উত্তরগুলো পাঠানো হচ্ছে।
->
-> ২. **Backend Security:** ব্যাকএন্ড কন্ট্রোলার টোকেন ভ্যালিডেট করে ডাটাবেজ থেকে আসল সঠিক উত্তরের সাথে মিলিয়ে দেখে এবং সার্ভারেই স্কোর ক্যালকুলেট করে।
->
-> ৩. **Database Save & Response:** ব্যাকএন্ডে `quiz-result` টেবিলে স্কোর পারসিস্ট করা হয় এবং ফ্রন্টএন্ডে রেসপন্স হিসেবে ক্যালকুলেটেড স্কোর ও মেসেজ পাঠানো হয়, যার ফলে স্ক্রিনে সাথে সাথে কনফেটি অ্যানিমেশন ও স্কোর রেন্ডার হয়।"
+> "এখন আমি প্ল্যাটফর্মের **Data Flow** এবং **Quiz Auto-Grading Logic** একসাথে লাইভ এবং কোডের মাধ্যমে দেখাচ্ছি।
+> 
+> **১. Client Request (Frontend to Backend):**
+> স্টুডেন্ট যখন কুইজের উত্তর সাবমিট করে, তখন Next.js ফ্রন্টএন্ড থেকে Strapi ব্যাকএন্ডের `POST /api/quizzes/:id/submit` এন্ডপয়েন্টে রিকোয়েস্ট যায়। Network ট্যাবে দেখতে পাচ্ছেন Headers-এ ইউজারের সিকিউর Bearer JWT টোকেন রয়েছে এবং Payload-এ স্টুডেন্টের দেওয়া উত্তরগুলো রয়েছে। ফ্রন্টএন্ডে কিন্তু সঠিক উত্তর পাঠানো হয়নি যাতে ক্লায়েন্ট-সাইডে কেউ চিটিং করতে না পারে।
+> 
+> **২. Backend Auto-Grading Execution (Inside `quiz.ts`):**
+> এবার ব্যাকএন্ড কোডে দেখুন:
+> * **লাইন ১৫২–১৫৭:** `ctx.state.user` দিয়ে JWT টোকেন ডিকোড করে ইউজার ভ্যালিডেট করা হয়।
+> * **লাইন ১৬৩–১৭৬:** ডাটাবেজ থেকে কুইজ এবং তার সাথে যুক্ত আসল `questions` ফেচ করা হয়।
+> * **লাইন ১৯৩–২০২:** একটি লুপের মাধ্যমে প্রতিটি প্রশ্নের ডাটাবেজে থাকা গোপন `question.correctAnswer`-এর সাথে স্টুডেন্টের সাবমিট করা উত্তরের তুলনা করা হয় এবং সঠিক হলে `correctCount` ১ বাড়ানো হয়।
+> * **লাইন ২০৫:** `(correctCount / totalQuestions) * 100` সূত্রের মাধ্যমে সার্ভারেই শতকরা স্কোর হিসাব করা হয়।
+> * **লাইন ২০৭–২১৬:** `strapi.db.query('api::quiz-result.quiz-result').create` দিয়ে স্টুডেন্ট আইডি, কুইজ আইডি ও প্রাপ্ত স্কোর স্থায়ীভাবে PostgreSQL ডাটাবেজে সেভ করা হয়।
+> 
+> **৩. Server Response (Backend to Frontend):**
+> এরপর ব্যাকএন্ড থেকে এই ক্যালকুলেটেড স্কোর ও মেসেজ রেসপন্স হিসেবে পাঠানো হয় এবং ফ্রন্টএন্ড তা রিসিভ করার সাথে সাথে স্ক্রিনে সেলিব্রেশন কনফেটি এবং স্কোর আপডেট করে দেয়। এটিই আমাদের সম্পূর্ণ এন্ড-টু-এন্ড ডেটা ফ্লো।"
 
 ---
 
-## 📌 পয়েন্ট ২: Role-Based Access (ব্যাকএন্ডে কীভাবে পারমিশন এনফোর্স করা হয়েছে)
+## 📌 স্টেপ ২: Progress Tracking Logic (লাইন-বাই-লাইন কোড ব্যাখ্যা)
 
 ### 🖥️ স্ক্রিনে যা দেখাবেন:
+* VS Code-এ [`backend/src/api/lesson-progress/controllers/lesson-progress.ts`](file:///F:/Learning%20Management%20System%20%28LMS%29/backend/src/api/lesson-progress/controllers/lesson-progress.ts) ওপেন করুন।
 
-* VS Code ওপেন করে [`backend/src/api/course/controllers/course.ts`](<file:///F:/Learning%20Management%20System%20%28LMS%29/backend/src/api/course/controllers/course.ts>) ফাইলটি দেখান।
+### 🗣️ মুখে যা বলবেন (লাইন-বাই-লাইন বাংলায়):
+
+> "এবার আমি **Progress Tracking Logic**-টি ব্যাখ্যা করছি:
+> 
+> দেখুন `lesson-progress.ts` ফাইলে:
+> * **লাইন ৭–১২:** `ctx.state.user` চেক করে নিশ্চিত করা হয় যে রিকোয়েস্টকারী একজন অথেন্টিকেটেড ইউজার।
+> * **লাইন ১৮–৩৫:** স্টুডেন্ট যে লেসনটি সম্পন্ন করছে, তার `lessonEntity` এবং তার প্যারেন্ট `course` ডাটাবেজ থেকে খুঁজে বের করা হয়।
+> * **লাইন ৪০–৪৯:** `enrollment` টেবিলে চেক করা হয় এই স্টুডেন্ট আদৌ এই কোর্সে এনরোল্ড কি না। এনরোল্ড না থাকলে প্রগ্রেস মার্ক করতে দেওয়া হয় না।
+> * **লাইন ৫১–৬১:** `existingProgress` চেক করে একই লেসনে ডুপ্লিকেট কমপ্লিশন এন্ট্রি রোধ করা হয়।
+> * **লাইন ৬৪–৭২:** সব ভ্যালিডেশন শেষে `strapi.db.query('api::lesson-progress.lesson-progress').create` দিয়ে স্টুডেন্ট আইডি, লেসন আইডি এবং `completed: true` ডাটাবেজে পারসিস্ট করা হয়। ফলে পেজ রিফ্রেশ দিলেও প্রগ্রেস ডাটাবেজ থেকেই রিলোড হয়।"
+
+---
+
+## 📌 স্টেপ ৩: Role-Based Access Control (RBAC) ব্যাকএন্ড এনফোর্সমেন্ট
+
+### 🖥️ স্ক্রিনে যা দেখাবেন:
+* VS Code-এ [`backend/src/api/course/controllers/course.ts`](file:///F:/Learning%20Management%20System%20%28LMS%29/backend/src/api/course/controllers/course.ts) ফাইলটি ওপেন করে `create`, `find`, এবং `update` মেথড দেখান।
 
 ### 🗣️ মুখে যা বলবেন (বাংলায়):
 
-> "সিকিউরিটির ক্ষেত্রে আমরা শুধু ফ্রন্টএন্ডের UI বাটন লুকিয়ে রাখিনি, বরং ব্যাকএন্ডের কন্ট্রোলার লেভেলে প্রতিটি ডাটাবেজ অপারেশনে Role-Based Access Control (RBAC) কঠোরভাবে এনফোর্স করেছি।
->
+> "সিকিউরিটির ক্ষেত্রে আমরা শুধু ফ্রন্টএন্ডে বাটন লুকিয়ে রাখিনি, বরং ব্যাকএন্ডের কন্ট্রোলার লেভেলে প্রতিটি ডাটাবেজ অপারেশনে কঠোর Role-Based Access Control (RBAC) নিশ্চিত করেছি।
+> 
 > দেখুন `course.ts` কন্ট্রোলারে:
->
 > * আমরা `getUserRole(strapi, user)` ফাংশনের মাধ্যমে ডাটাবেজ থেকে ইউজারের রোল ফেচ করি।
-> * কোনো Student যদি API কল দিয়ে কোর্স তৈরি বা ডিলিট করার চেষ্টা করে, ব্যাকএন্ড তাকে সাথে সাথে `403 Forbidden` রিটার্ন করে।
-> * আবার একজন Instructor শুধু তার নিজের কোর্সের ডেটাই মডিফাই করতে পারে—অন্য ইনস্ট্রাক্টরের কোর্সে হাত দিলে `You can only modify your own courses` এরর দিয়ে রিকোয়েস্ট ব্লক করে দেওয়া হয়।"
+> * কোনো Student যদি এপিআই কল দিয়ে কোর্স তৈরি বা ডিলিট করার চেষ্টা করে, ব্যাকএন্ড তাকে `403 Forbidden` রিটার্ন করে।
+> * আবার একজন Instructor শুধু তার নিজের তৈরি করা কোর্সের ডেটাই মডিফাই করতে পারে—অন্য ইনস্ট্রাক্টরের কোর্সে হাত দিলে ব্যাকএন্ড স্বয়ংক্রিয়ভাবে রিকোয়েস্ট ব্লক করে দেয়।"
 
 ---
 
-## 📌 পয়েন্ট ৩: Progress Tracking Logic (লাইন-বাই-লাইন কোড ব্যাখ্যা)
+## 📌 স্টেপ ৪: Admin Panel + Blog Draft &rarr; Publish Flow
 
 ### 🖥️ স্ক্রিনে যা দেখাবেন:
-
-* VS Code-এ [`backend/src/api/lesson-progress/controllers/lesson-progress.ts`](<file:///F:/Learning%20Management%20System%20%28LMS%29/backend/src/api/lesson-progress/controllers/lesson-progress.ts>) ফাইলটি ওপেন করুন এবং কার্সর দিয়ে লাইনগুলো দেখান।
-
-### 🗣️ মুখে যা বলবেন (লাইন-বাই-লাইন বাংলায়):
-
-> "এবার আমি **Progress Tracking Logic**-টি লাইন বাই লাইন ব্যাখ্যা করছি:
->
-> * **লাইন ৪–৬:** `ctx.state.user` চেক করে নিশ্চিত করা হয় যে রিকোয়েস্টকারী একজন অথেন্টিকেটেড ইউজার কি না। না হলে `401 Unauthorized` দেয়।
-> * **লাইন ১৭–৩৪:** স্টুডেন্ট যে লেসনটি কমপ্লিট করছে, তার `lessonEntity` এবং তার প্যারেন্ট `course` আইডি ডাটাবেজ থেকে খুঁজে বের করা হয়।
-> * **লাইন ৩৯–৪৯:** ডাটাবেজের `enrollment` টেবিলে চেক করা হয় এই স্টুডেন্ট আদৌ এই কোর্সে এনরোল্ড কি না। এনরোল্ড না থাকলে প্রগ্রেস মার্ক করতে দেওয়া হয় না।
-> * **লাইন ৫১–৬১:** `existingProgress` চেক করা হয় যাতে একই লেসনে বারবার ডুপ্লিকেট কমপ্লিশন এন্ট্রি তৈরি না হয়।
-> * **লাইন ৬৪–৭২:** সব ভ্যালিডেশন পাস করলে `strapi.db.query('api::lesson-progress.lesson-progress').create` মেথড দিয়ে স্টুডেন্ট আইডি, লেসন আইডি এবং `completed: true` ডাটাবেজে স্থায়ীভাবে সেভ করা হয়।
-> * **লাইন ৮১–৯৫ (`find` মেথড):** এখানে ডেটা আইসোলেশন নিশ্চিত করা হয়েছে—একজন স্টুডেন্ট যখন প্রগ্রেস ফেচ করে, সে শুধুমাত্র নিজের প্রগ্রেস দেখতে পায়, অন্য কারও প্রগ্রেস তার কাছে যায় না।"
-
----
-
-## 📌 পয়েন্ট ৪: Quiz Auto-Grading Logic (লাইন-বাই-লাইন কোড ব্যাখ্যা)
-
-### 🖥️ স্ক্রিনে যা দেখাবেন:
-
-* VS Code-এ [`backend/src/api/quiz/controllers/quiz.ts`](<file:///F:/Learning%20Management%20System%20%28LMS%29/backend/src/api/quiz/controllers/quiz.ts>) ফাইলটির **লাইন ১৪৫ থেকে ২০৫** পর্যন্ত ওপেন করুন।
-
-### 🗣️ মুখে যা বলবেন (লাইন-বাই-লাইন বাংলায়):
-
-> "এবার আসি **Quiz Auto-Grading Logic**-এ:
->
-> * **লাইন ১৪৫–১৫৪:** `submit` মেথডে ইউজার ভ্যালিডেশনের পর স্টুডেন্টের পাঠানো `answers` অবজেক্ট রিসিভ করা হয়।
-> * **লাইন ১৫৮–১৭৬:** কুইজের আইডি দিয়ে ডাটাবেজ থেকে কুইজের সাথে যুক্ত সমস্ত `questions` ফেচ করা হয়।
-> * **লাইন ১৭৮–১৮৮:** একটি লুপের মাধ্যমে প্রতিটি প্রশ্নের ডাটাবেজে থাকা গোপন `question.correctAnswer`-এর সাথে স্টুডেন্টের দেওয়া উত্তরের তুলনা করা হয়। উত্তর মিললে `correctCount` ১ বৃদ্ধি পায়।
-> * **লাইন ১৯০:** `(correctCount / totalQuestions) * 100` সূত্রের মাধ্যমে স্বয়ংক্রিয়ভাবে শতকরা স্কোর হিসাব করা হয়।
-> * **লাইন ১৯৩–২০১:** `strapi.db.query('api::quiz-result.quiz-result').create` দিয়ে স্টুডেন্টের আইডি, কুইজ আইডি, প্রাপ্ত স্কোর এবং মোট প্রশ্নের সংখ্যা ডাটাবেজে রেকর্ড হিসেবে সেভ করা হয়।
-> * **লাইন ২০৩–২১০:** ক্লায়েন্টে ক্যালকুলেটেড স্কোর ও কনফার্মেশন মেসেজ রেসপন্স পাঠানো হয়।"
-
----
-
-## 📌 পয়েন্ট ৫: Admin Panel + Blog Draft &rarr; Publish Flow
-
-### 🖥️ স্ক্রিনে যা দেখাবেন:
-
-1. **Admin Panel এ রোল পরিবর্তন:**
-   * `/dashboard/admin/users` পেজে যান।
-   * যেকোনো ইউজারের রোলের ড্রপডাউনে ক্লিক করে রোল পরিবর্তন করুন (যেমন Student &rarr; Instructor বা Admin)।
-2. **Blog Draft &rarr; Publish Flow:**
-   * `/dashboard/blogs` পেজে যান এবং **"Write New Post"** বাটনে ক্লিক করুন।
-   * Title দিন: `"Testing Draft Article"` এবং Status দিন **Draft**। Save বাটনে ক্লিক করুন।
-   * পাবলিক পেজ `/blog` এ যান &rarr; দেখান যে ড্রাফট আর্টিকেলটি এখানে আসেনি।
+1. **Admin Panel:** `/dashboard/admin/users` পেজে গিয়ে যেকোনো ইউজারের রোলের ড্রপডাউনে ক্লিক করে রোল পরিবর্তন করে দেখান।
+2. **Blog Draft &rarr; Publish:**
+   * `/dashboard/blogs` পেজে গিয়ে **"Write New Post"** বাটনে ক্লিক করুন।
+   * Title দিন: `"Sample Draft Article"`, Status দিন **Draft** &rarr; Save করুন।
+   * পাবলিক পেজ `/blog` এ গিয়ে দেখান যে ড্রাফট আর্টিকেলটি এখানে আসেনি।
    * আবার ড্যাশবোর্ডে এসে আর্টিকেলটি **Edit** করে Status দিন **Published** &rarr; Save করুন।
-   * এবার `/blog` পেজ রিফ্রেশ করে দেখান যে আর্টিকেলটি সাথে সাথে সবার জন্য লাইভ হয়ে গেছে!
+   * এবার `/blog` পেজ রিফ্রেশ করে দেখান যে আর্টিকেলটি সাথে সাথে লাইভ হয়ে গেছে!
 
 ### 🗣️ মুখে যা বলবেন (বাংলায়):
 
-> "এখানে অ্যাডমিন প্যানেল থেকে আমরা লাইভ ইউজারদের রোল প্রমোট বা পরিবর্তন করতে পারি।
->
+> "এখানে অ্যাডমিন প্যানেল থেকে আমরা সরাসরি লাইভ ইউজারদের রোল প্রমোট বা পরিবর্তন করতে পারি।
+> 
 > ব্লগের ক্ষেত্রে আমাদের কমপ্লিট **Draft vs Published** লাইফসাইকেল রয়েছে:
 > যখন কনটেন্ট ম্যানেজার বা অ্যাডমিন কোনো আর্টিকেল 'Draft' হিসেবে রাখেন, তখন সেটি ডাটাবেজে সংরক্ষিত থাকলেও পাবলিক `/blog` পেজে দেখা যায় না। যখনই এটিকে 'Published' করা হয়, সাথে সাথে এটি পাবলিকলি লাইভ হয়ে যায়।"
 
 ---
 
-## 📌 পয়েন্ট ৬: Deployment Setup (Vercel, Railway এবং Environment Variables)
+## 📌 স্টেপ ৫: Deployment Setup (Railway, Vercel & Environment Variables)
 
 ### 🖥️ স্ক্রিনে যা দেখাবেন:
-
-1. **Railway Dashboard Tab:**
-   * Strapi Web Service এ ক্লিক করুন &rarr; **Variables** ট্যাবে যান।
-   * দেখান: `DATABASE_CLIENT=postgres`, `DATABASE_URL`, `JWT_SECRET`।
-   * দেখান PostgreSQL ডাটাবেজ সার্ভিসটি কীভাবে ব্যাকএন্ডের সাথে লিঙ্ক করা।
-2. **Vercel Dashboard Tab:**
-   * আপনার LMS Next.js প্রজেক্টের **Settings &rarr; Environment Variables** এ যান।
-   * দেখান: `NEXT_PUBLIC_API_URL` ভেরিয়েবলটি লাইভ Railway ব্যাকএন্ডের ডোমেইনের দিকে পয়েন্ট করা আছে।
+1. **Railway Dashboard Tab:** Strapi Service &rarr; **Variables** ট্যাবে গিয়ে `DATABASE_CLIENT=postgres`, `DATABASE_URL`, `JWT_SECRET` দেখান।
+2. **Vercel Dashboard Tab:** Next.js Project &rarr; **Settings &rarr; Environment Variables** এ গিয়ে `NEXT_PUBLIC_API_URL` দেখান।
 
 ### 🗣️ মুখে যা বলবেন (বাংলায়):
 
 > "সর্বশেষে ডিপ্লয়মেন্ট আর্কিটেকচার নিয়ে সংক্ষেপে বলছি:
->
-> * **Railway:** ব্যাকএন্ডের জন্য আমরা Strapi 5-কে Railway-তে ডিপ্লয় করেছি এবং এটিকে পরিচালিত PostgreSQL ডাটাবেজের সাথে কানেক্ট করেছি। এখানে `DATABASE_CLIENT=postgres` এবং প্রোডাকশন সিক্রেট কিগুলো এনভায়রনমেন্ট ভেরিয়েবলে সিকিউরভাবে কনফিগার করা আছে।
-> * **Vercel:** ফ্রন্টএন্ড Next.js অ্যাপটি Vercel-এর গ্লোবাল এজ নেটওয়ার্কে ডিপ্লয় করা আছে এবং `NEXT_PUBLIC_API_URL` এনভায়রনমেন্ট ভেরিয়েবলের মাধ্যমে সরাসরি Railway ব্যাকএন্ড API-এর সাথে কমিউনিকেট করছে।"
+> * **Railway:** ব্যাকএন্ডের জন্য আমরা Strapi 5-কে Railway-তে ডিপ্লয় করেছি এবং সরাসরি একটি পরিচালিত PostgreSQL ডাটাবেজের সাথে কানেক্ট করেছি। এখানে `DATABASE_CLIENT=postgres` এবং সিকিউর JWT সিক্রেটগুলো এনভায়রনমেন্ট ভেরিয়েবলে কনফিগার করা আছে।
+> * **Vercel:** ফ্রন্টএন্ড Next.js অ্যাপটি Vercel-এর গ্লোবাল এজ নেটওয়ার্কে হোস্ট করা এবং `NEXT_PUBLIC_API_URL` এনভায়রনমেন্ট ভেরিয়েবলের মাধ্যমে সরাসরি Railway ব্যাকএন্ড এপিআই-এর সাথে সংযুক্ত।
+> 
+> প্রজেক্টটির গিটহাবে একটি স্বচ্ছ ও অর্থপূর্ণ কমিট হিস্টোরি রয়েছে এবং রুট `README.md`-তে সমস্ত আর্কিটেকচার ডায়াগ্রাম ও লোকাল সেটআপ গাইড বিস্তারিতভাবে দেওয়া আছে।
+> 
+> ধৈর্য ধরে পুরো ওয়াকথ্রুটি দেখার জন্য সবাইকে ধন্যবাদ!"
 
 ---
 
-## 🎯 রেকর্ডিং এর শর্টকাট চেকলিস্ট:
-
-| স্টেপ                  | ফাইল / স্ক্রিন        | মূল পয়েন্ট                                                                                                |
-| :-------------------------- | :------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
-| **১. Data Flow**     | ব্রাউজার F12 Network Tab | কুইজ সাবমিট করে Headers, Payload এবং JSON Response দেখানো।                                  |
-| **২. Backend RBAC**  | `course.ts` (VS Code)          | `getUserRole` এবং রোল অনুযায়ী পারমিশন গার্ড দেখানো।                              |
-| **৩. Progress Code** | `lesson-progress.ts` (VS Code) | লেসন চেক, এনরোলমেন্ট ভ্যালিডেশন এবং ডাটাবেজ সেভ দেখানো।             |
-| **৪. Quiz Grading**  | `quiz.ts` (VS Code)            | লুপে অ্যান্সার ম্যাচিং,`(correct / total) * 100` এবং রেজাল্ট সেভ দেখানো। |
-| **৫. Admin + Blog**  | `/dashboard/blogs` & `/blog` | রোল পরিবর্তন এবং ব্লগের Draft&rarr; Published লাইভ টগল দেখানো।                   |
-| **৬. Deployment**    | Railway + Vercel Dashboards      | PostgreSQL ডাটাবেজ এবং`NEXT_PUBLIC_API_URL` এনভায়রনমেন্ট ভেরিয়েবল দেখানো। |
+## 📋 ফাইনাল চেকলিস্ট (ভিডিও রেকর্ড করার সময় চোখের সামনে রাখুন):
+| ক্রম | বিষয় | স্ক্রিন অ্যাকশন |
+| :---: | :--- | :--- |
+| **১** | **Data Flow + Quiz Grading** | ব্রাউজারে F12 Network Tab &rarr; কুইজ সাবমিট &rarr; `quiz.ts` কোড দেখান &rarr; রেসপন্স JSON ও কনফেটি |
+| **২** | **Progress Tracking** | VS Code-এ `lesson-progress.ts` ফাইল ওপেন করে কমেন্ট অনুযায়ী লাইনগুলো দেখান |
+| **৩** | **Backend RBAC** | VS Code-এ `course.ts` ফাইলে `getUserRole` ও ওনারশিপ গার্ড দেখান |
+| **৪** | **Admin & Blog Lifecycle** | ড্যাশবোর্ডে রোল চেঞ্জ &rarr; ব্লগে Draft সেভ করে দেখানো &rarr; Publish করে লাইভ পেজে দেখানো |
+| **৫** | **Deployment Setup** | Railway Variables (PostgreSQL) এবং Vercel Variables (`NEXT_PUBLIC_API_URL`) দেখানো |
