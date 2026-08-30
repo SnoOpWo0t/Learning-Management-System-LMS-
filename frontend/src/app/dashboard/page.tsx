@@ -7,6 +7,8 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { fetchAPI } from '@/lib/api';
 
 import AdminOverview from './AdminOverview';
+import ContentManagerOverview from './ContentManagerOverview';
+import InstructorOverview from './InstructorOverview';
 
 function StudentOverview() {
   const { user, token } = useAuth();
@@ -321,6 +323,14 @@ export default function DashboardPage() {
 
   if (user?.roleType === 'Admin') {
     return <AdminOverview />;
+  }
+
+  if (user?.roleType === 'Content Manager') {
+    return <ContentManagerOverview />;
+  }
+
+  if (user?.roleType === 'Instructor') {
+    return <InstructorOverview />;
   }
 
   return <StudentOverview />;
