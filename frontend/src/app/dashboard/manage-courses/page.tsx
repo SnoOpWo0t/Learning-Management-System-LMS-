@@ -95,8 +95,8 @@ export default function ManageCoursesPage() {
       });
       setDeletingCourse(null);
       fetchCourses();
-    } catch (err) {
-      alert('Failed to delete course');
+    } catch (err: any) {
+      alert(`Failed to delete course: ${err?.message || err}`);
     } finally {
       setSaving(false);
     }

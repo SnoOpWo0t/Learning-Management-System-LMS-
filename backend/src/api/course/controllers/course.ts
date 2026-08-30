@@ -1,5 +1,18 @@
 import { factories } from '@strapi/strapi';
 
+async function getUserRole(strapi: any, user: any) {
+  if (user.role?.name) return user.role.name;
+  if (user.roleType) return user.roleType;
+  if (user.id) {
+    const fullUser = await strapi.db.query('plugin::users-permissions.user').findOne({
+      where: { id: user.id },
+      populate: ['role']
+    });
+    return fullUser?.role?.name || fullUser?.roleType || 'Student';
+  }
+  return 'Student';
+}
+
 export default factories.createCoreController('api::course.course', ({ strapi }) => ({
   async create(ctx) {
     const user = ctx.state.user;
@@ -7,7 +20,7 @@ export default factories.createCoreController('api::course.course', ({ strapi })
       return ctx.unauthorized('You must be logged in to create a course');
     }
 
-    const roleName = user.role?.name;
+    const roleName = await getUserRole(strapi, user);
 
     if (roleName !== 'Admin' && roleName !== 'Content Manager' && roleName !== 'Instructor') {
       return ctx.forbidden('You do not have permission to create courses');
@@ -18,25 +31,23 @@ export default factories.createCoreController('api::course.course', ({ strapi })
       if (!ctx.request.body.data) ctx.request.body.data = {};
       ctx.request.body.data.instructor = user.id;
     } else {
-      // Content Manager and Admin can set the instructor manually, or default to themselves if omitted
       if (!ctx.request.body.data) ctx.request.body.data = {};
       if (!ctx.request.body.data.instructor) {
         ctx.request.body.data.instructor = user.id;
       }
     }
 
-    // Call the default create logic
-    const response = await super.create(ctx);
-    return response;
+    return super.create(ctx);
   },
 
   async find(ctx) {
     const user = ctx.state.user;
-    // Public users and Students can see courses (handled by Strapi's public permissions or default logic)
-    // But if it's an Instructor, we should strictly filter to only show their courses
-    if (user && user.role?.name === 'Instructor') {
-      const filters = (ctx.query.filters as any) || {};
-      ctx.query.filters = { ...filters, instructor: { documentId: user.documentId } };
+    if (user) {
+      const roleName = await getUserRole(strapi, user);
+      if (roleName === 'Instructor') {
+        const filters = (ctx.query.filters as any) || {};
+        ctx.query.filters = { ...filters, instructor: { id: user.id } };
+      }
     }
 
     return super.find(ctx);
@@ -47,12 +58,23 @@ export default factories.createCoreController('api::course.course', ({ strapi })
     const { id } = ctx.params;
     
     if (!user) return ctx.unauthorized();
-    const roleName = user.role?.name;
+    const roleName = await getUserRole(strapi, user);
 
     if (roleName === 'Instructor') {
-      // Ensure the instructor owns the course
-      const course: any = await strapi.entityService.findOne('api::course.course', id, { populate: ['instructor'] });
-      if (!course) return ctx.notFound();
+      let course: any;
+      if (typeof id === 'string' && isNaN(Number(id))) {
+        course = await strapi.db.query('api::course.course').findOne({
+          where: { documentId: id },
+          populate: ['instructor']
+        });
+      } else {
+        course = await strapi.db.query('api::course.course').findOne({
+          where: { id: Number(id) },
+          populate: ['instructor']
+        });
+      }
+
+      if (!course) return ctx.notFound('Course not found');
       if (!course.instructor || course.instructor.id !== user.id) {
         return ctx.forbidden('You can only update your own courses');
       }
@@ -68,18 +90,92 @@ export default factories.createCoreController('api::course.course', ({ strapi })
     const { id } = ctx.params;
     
     if (!user) return ctx.unauthorized();
-    const roleName = user.role?.name;
+    const roleName = await getUserRole(strapi, user);
 
-    if (roleName === 'Instructor') {
-      const course: any = await strapi.entityService.findOne('api::course.course', id, { populate: ['instructor'] });
-      if (!course) return ctx.notFound();
-      if (!course.instructor || course.instructor.id !== user.id) {
-        return ctx.forbidden('You can only delete your own courses');
-      }
-    } else if (roleName !== 'Admin' && roleName !== 'Content Manager') {
+    if (roleName !== 'Admin' && roleName !== 'Content Manager' && roleName !== 'Instructor') {
       return ctx.forbidden('You do not have permission to delete courses');
     }
 
-    return super.delete(ctx);
+    try {
+      // Find course by documentId or numeric id
+      let course: any;
+      if (typeof id === 'string' && isNaN(Number(id))) {
+        course = await strapi.db.query('api::course.course').findOne({
+          where: { documentId: id },
+          populate: ['instructor']
+        });
+      } else {
+        course = await strapi.db.query('api::course.course').findOne({
+          where: { id: Number(id) },
+          populate: ['instructor']
+        });
+      }
+
+      if (!course) return ctx.notFound('Course not found');
+
+      if (roleName === 'Instructor') {
+        if (!course.instructor || course.instructor.id !== user.id) {
+          return ctx.forbidden('You can only delete your own courses');
+        }
+      }
+
+      // Cascading deletion of related entities to prevent foreign key errors
+      // 1. Delete Enrollments
+      await strapi.db.query('api::enrollment.enrollment').deleteMany({
+        where: { course: course.id }
+      });
+
+      // 2. Delete Course Ratings
+      await strapi.db.query('api::course-rating.course-rating').deleteMany({
+        where: { course: course.id }
+      });
+
+      // 3. Find and delete Quizzes & Questions & Quiz Results
+      const quizzes = await strapi.db.query('api::quiz.quiz').findMany({
+        where: { course: course.id }
+      });
+
+      for (const quiz of quizzes) {
+        await strapi.db.query('api::quiz-result.quiz-result').deleteMany({
+          where: { quiz: quiz.id }
+        });
+        await strapi.db.query('api::question.question').deleteMany({
+          where: { quiz: quiz.id }
+        });
+        await strapi.db.query('api::quiz.quiz').delete({
+          where: { id: quiz.id }
+        });
+      }
+
+      // 4. Find and delete Lessons & Lesson Progresses
+      const lessons = await strapi.db.query('api::lesson.lesson').findMany({
+        where: { course: course.id }
+      });
+
+      for (const lesson of lessons) {
+        await strapi.db.query('api::lesson-progress.lesson-progress').deleteMany({
+          where: { lesson: lesson.id }
+        });
+        await strapi.db.query('api::lesson.lesson').delete({
+          where: { id: lesson.id }
+        });
+      }
+
+      // 5. Delete the course itself
+      await strapi.db.query('api::course.course').delete({
+        where: { id: course.id }
+      });
+
+      return {
+        data: {
+          id: course.id,
+          documentId: course.documentId,
+          message: 'Course and all associated content deleted successfully'
+        }
+      };
+    } catch (err: any) {
+      console.error('Failed to delete course:', err);
+      return ctx.badRequest('Failed to delete course: ' + (err?.message || 'Unknown error'));
+    }
   }
 }));

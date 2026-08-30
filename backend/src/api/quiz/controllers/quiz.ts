@@ -1,10 +1,23 @@
 import { factories } from '@strapi/strapi';
 
+async function getUserRole(strapi: any, user: any) {
+  if (user.role?.name) return user.role.name;
+  if (user.roleType) return user.roleType;
+  if (user.id) {
+    const fullUser = await strapi.db.query('plugin::users-permissions.user').findOne({
+      where: { id: user.id },
+      populate: ['role']
+    });
+    return fullUser?.role?.name || fullUser?.roleType || 'Student';
+  }
+  return 'Student';
+}
+
 export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => ({
   async create(ctx) {
     const user = ctx.state.user;
     if (!user) return ctx.unauthorized();
-    const roleName = user.role?.name;
+    const roleName = await getUserRole(strapi, user);
 
     if (roleName !== 'Admin' && roleName !== 'Content Manager' && roleName !== 'Instructor') {
       return ctx.forbidden('You do not have permission to create quizzes');
@@ -16,7 +29,19 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
     }
 
     if (roleName === 'Instructor') {
-      const courseEntity: any = await strapi.entityService.findOne('api::course.course', course, { populate: ['instructor'] });
+      let courseEntity: any;
+      if (typeof course === 'string' && isNaN(Number(course))) {
+        courseEntity = await strapi.db.query('api::course.course').findOne({
+          where: { documentId: course },
+          populate: ['instructor']
+        });
+      } else {
+        courseEntity = await strapi.db.query('api::course.course').findOne({
+          where: { id: Number(course) },
+          populate: ['instructor']
+        });
+      }
+
       if (!courseEntity || !courseEntity.instructor || courseEntity.instructor.id !== user.id) {
         return ctx.forbidden('You can only add quizzes to your own courses');
       }
@@ -30,10 +55,22 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
     const { id } = ctx.params;
     
     if (!user) return ctx.unauthorized();
-    const roleName = user.role?.name;
+    const roleName = await getUserRole(strapi, user);
 
     if (roleName === 'Instructor') {
-      const quiz: any = await strapi.entityService.findOne('api::quiz.quiz', id, { populate: ['course', 'course.instructor'] });
+      let quiz: any;
+      if (typeof id === 'string' && isNaN(Number(id))) {
+        quiz = await strapi.db.query('api::quiz.quiz').findOne({
+          where: { documentId: id },
+          populate: ['course', 'course.instructor']
+        });
+      } else {
+        quiz = await strapi.db.query('api::quiz.quiz').findOne({
+          where: { id: Number(id) },
+          populate: ['course', 'course.instructor']
+        });
+      }
+
       if (!quiz || !quiz.course || !quiz.course.instructor || quiz.course.instructor.id !== user.id) {
         return ctx.forbidden('You can only update quizzes in your own courses');
       }
@@ -49,18 +86,60 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
     const { id } = ctx.params;
     
     if (!user) return ctx.unauthorized();
-    const roleName = user.role?.name;
+    const roleName = await getUserRole(strapi, user);
 
-    if (roleName === 'Instructor') {
-      const quiz: any = await strapi.entityService.findOne('api::quiz.quiz', id, { populate: ['course', 'course.instructor'] });
-      if (!quiz || !quiz.course || !quiz.course.instructor || quiz.course.instructor.id !== user.id) {
-        return ctx.forbidden('You can only delete quizzes in your own courses');
-      }
-    } else if (roleName !== 'Admin' && roleName !== 'Content Manager') {
+    if (roleName !== 'Admin' && roleName !== 'Content Manager' && roleName !== 'Instructor') {
       return ctx.forbidden('You do not have permission to delete quizzes');
     }
 
-    return super.delete(ctx);
+    try {
+      let quiz: any;
+      if (typeof id === 'string' && isNaN(Number(id))) {
+        quiz = await strapi.db.query('api::quiz.quiz').findOne({
+          where: { documentId: id },
+          populate: ['course', 'course.instructor']
+        });
+      } else {
+        quiz = await strapi.db.query('api::quiz.quiz').findOne({
+          where: { id: Number(id) },
+          populate: ['course', 'course.instructor']
+        });
+      }
+
+      if (!quiz) return ctx.notFound('Quiz not found');
+
+      if (roleName === 'Instructor') {
+        if (!quiz.course || !quiz.course.instructor || quiz.course.instructor.id !== user.id) {
+          return ctx.forbidden('You can only delete quizzes in your own courses');
+        }
+      }
+
+      // Delete quiz results
+      await strapi.db.query('api::quiz-result.quiz-result').deleteMany({
+        where: { quiz: quiz.id }
+      });
+
+      // Delete questions
+      await strapi.db.query('api::question.question').deleteMany({
+        where: { quiz: quiz.id }
+      });
+
+      // Delete quiz
+      await strapi.db.query('api::quiz.quiz').delete({
+        where: { id: quiz.id }
+      });
+
+      return {
+        data: {
+          id: quiz.id,
+          documentId: quiz.documentId,
+          message: 'Quiz deleted successfully'
+        }
+      };
+    } catch (err: any) {
+      console.error('Failed to delete quiz:', err);
+      return ctx.badRequest('Failed to delete quiz: ' + (err?.message || 'Unknown error'));
+    }
   },
 
   async submit(ctx) {
