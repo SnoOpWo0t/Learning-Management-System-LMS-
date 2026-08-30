@@ -5,10 +5,10 @@ import PublicNavbar from '@/components/PublicNavbar';
 export const revalidate = 60; // ISR for blogs
 
 export default async function PublicBlogPage() {
-  let blogs = [];
+  let blogs: any[] = [];
   try {
-    // Fetch only published blogs
-    const res = await fetchAPI('/blog-posts?filters[status][$eq]=Published&populate=author');
+    // Fetch published blogs (Strapi's REST API automatically filters for published entries)
+    const res = await fetchAPI('/blog-posts?populate=author&sort=createdAt:desc');
     blogs = res.data || [];
   } catch (err) {
     console.error('Failed to fetch blogs');

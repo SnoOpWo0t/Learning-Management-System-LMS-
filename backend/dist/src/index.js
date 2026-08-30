@@ -173,6 +173,48 @@ exports.default = {
         catch (err) {
             strapi.log.error('Failed to auto-generate lessons:', err);
         }
+        // Auto-generate sample published blog posts if none exist
+        try {
+            const existingBlogs = await strapi.db.query('api::blog-post.blog-post').findMany({});
+            if (existingBlogs.length === 0) {
+                strapi.log.info('Seeding sample blog posts...');
+                const adminUser = await strapi.db.query('plugin::users-permissions.user').findOne({
+                    where: { email: 'admin@demo.com' }
+                });
+                const contentUser = await strapi.db.query('plugin::users-permissions.user').findOne({
+                    where: { email: 'content@demo.com' }
+                });
+                const sampleBlogs = [
+                    {
+                        title: 'Getting Started with Modern Web Architecture in 2026',
+                        body: `Modern web development has evolved rapidly with decoupled architectures. By separating the frontend presentation layer (Next.js App Router) from the headless backend (Strapi CMS), engineering teams achieve faster iteration cycles, independent scaling, and heightened security.\n\nIn this article, we explore how server-side rendering, edge deployments, and relational database integrity come together to create lightning-fast learning platforms.`,
+                        author: (contentUser === null || contentUser === void 0 ? void 0 : contentUser.id) || (adminUser === null || adminUser === void 0 ? void 0 : adminUser.id),
+                        publishedAt: new Date()
+                    },
+                    {
+                        title: 'Mastering Role-Based Access Control (RBAC)',
+                        body: `Role-Based Access Control is the cornerstone of enterprise software security. In a learning management system, distinct personas such as Admins, Content Managers, Instructors, and Students each require strict boundary enforcement.\n\nNever rely on simply hiding buttons on the client. Always validate JWT tokens and database entity ownership at the controller level to prevent unauthorized data access or modifications.`,
+                        author: (adminUser === null || adminUser === void 0 ? void 0 : adminUser.id) || (contentUser === null || contentUser === void 0 ? void 0 : contentUser.id),
+                        publishedAt: new Date()
+                    },
+                    {
+                        title: 'The Power of Active Learning: Why Building Beats Watching',
+                        body: `Passive video consumption only leads to partial retention. The real breakthrough in technical education happens through active practice: taking auto-graded assessments, completing sequential coding challenges, and building capstone projects.\n\nOur LMS platform emphasizes immediate feedback loops so learners can test their mastery after every module.`,
+                        author: (contentUser === null || contentUser === void 0 ? void 0 : contentUser.id) || (adminUser === null || adminUser === void 0 ? void 0 : adminUser.id),
+                        publishedAt: new Date()
+                    }
+                ];
+                for (const blog of sampleBlogs) {
+                    await strapi.entityService.create('api::blog-post.blog-post', {
+                        data: blog
+                    });
+                }
+                strapi.log.info('Blog post seeding complete.');
+            }
+        }
+        catch (err) {
+            strapi.log.error('Failed to seed blog posts:', err);
+        }
     },
 };
 async function grantPublicPermissions(strapi) {

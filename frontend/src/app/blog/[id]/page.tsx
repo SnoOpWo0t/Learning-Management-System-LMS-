@@ -7,7 +7,7 @@ export default async function PublicBlogDetailsPage({ params }: { params: { id: 
   let blog = null;
   try {
     const res = await fetchAPI(`/blog-posts/${params.id}?populate=author`);
-    if (res.data?.status === 'Published') {
+    if (res.data) {
       blog = res.data;
     }
   } catch (err) {
