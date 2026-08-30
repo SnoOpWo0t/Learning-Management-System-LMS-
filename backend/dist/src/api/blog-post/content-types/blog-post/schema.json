@@ -27,14 +27,6 @@
             "type": "relation",
             "relation": "manyToOne",
             "target": "plugin::users-permissions.user"
-        },
-        "status": {
-            "type": "enumeration",
-            "enum": [
-                "Draft",
-                "Published"
-            ],
-            "default": "Draft"
         }
     }
 }

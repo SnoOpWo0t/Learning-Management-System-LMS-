@@ -51,8 +51,8 @@ export default function ContentManagerOverview() {
       const lessons = lessonsRes.data || [];
       const quizzes = quizzesRes.data || [];
 
-      const published = blogs.filter((b: any) => b.status === 'Published').length;
-      const drafts = blogs.filter((b: any) => b.status !== 'Published').length;
+      const published = blogs.filter((b: any) => Boolean(b.publishedAt || b.status === 'Published')).length;
+      const drafts = blogs.filter((b: any) => !Boolean(b.publishedAt || b.status === 'Published')).length;
 
       // Difficulty distribution
       const diffCount: Record<string, number> = { Beginner: 0, Intermediate: 0, Advanced: 0 };

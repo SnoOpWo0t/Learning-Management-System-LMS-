@@ -47,10 +47,11 @@ export default function ManageBlogsPage() {
   };
 
   const openEditModal = (blog: any) => {
+    const isPublished = Boolean(blog.publishedAt || blog.status === 'Published');
     setFormData({ 
       title: blog.title, 
       body: blog.body, 
-      status: blog.status || 'Draft' 
+      status: isPublished ? 'Published' : 'Draft' 
     });
     setEditingBlog(blog);
     setIsModalOpen(true);
@@ -60,18 +61,23 @@ export default function ManageBlogsPage() {
     e.preventDefault();
     setSaving(true);
     try {
+      const payloadData: any = {
+        title: formData.title,
+        body: formData.body,
+        publishedAt: formData.status === 'Published' ? new Date().toISOString() : null,
+      };
+
       if (editingBlog) {
         await fetchAPI(`/blog-posts/${editingBlog.documentId}`, {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ data: formData })
+          body: JSON.stringify({ data: payloadData })
         });
       } else {
-        // Optional: populate author if we had user context in this scope
         await fetchAPI(`/blog-posts`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ data: { ...formData, author: user?.id } })
+          body: JSON.stringify({ data: { ...payloadData, author: user?.id } })
         });
       }
       setIsModalOpen(false);
@@ -144,10 +150,10 @@ export default function ManageBlogsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-full border ${
-                          blog.status === 'Published' ? 'bg-green-50 border-green-100 text-green-600 dark:bg-green-900/30 dark:border-green-800/50 dark:text-green-400' :
+                          blog.publishedAt || blog.status === 'Published' ? 'bg-green-50 border-green-100 text-green-600 dark:bg-green-900/30 dark:border-green-800/50 dark:text-green-400' :
                           'bg-yellow-50 border-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:border-yellow-800/50 dark:text-yellow-400'
                         }`}>
-                          {blog.status || 'Draft'}
+                          {blog.publishedAt || blog.status === 'Published' ? 'Published' : 'Draft'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
